@@ -1,0 +1,28 @@
+# Ignore Visual Studio temporary files, build results, and user-specific settings.
+*.log
+*.obj
+*.pdb
+*.ilk
+*.idb
+*.tlog
+*.lastbuildstate
+*.suo
+*.sdf
+*.opensdf
+*.ipch
+
+# Ignore specific directories and their contents
+/Chess(C)/x64/
+/Chess(C)/Chess(C).tlog/
+/.vs/
+# Ignore build directories and intermediate object files
+/Chess(C)/x64/Debug/
+/Chess(C)/x64/Release/
+
+# Ignore user-specific Visual Studio project files
+*.vcxproj.user
+
+# Backup and temporary files
+*.bak
+*.tmp
+*.swp
