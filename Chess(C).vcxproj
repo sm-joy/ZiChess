@@ -151,14 +151,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\audio.c" />
     <ClCompile Include="src\core.c" />
+    <ClCompile Include="src\game.c" />
     <ClCompile Include="src\main.c" />
     <ClCompile Include="src\renderer.c" />
     <ClCompile Include="src\settings.c" />
     <ClCompile Include="src\utils.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\audio.h" />
     <ClInclude Include="include\core.h" />
+    <ClInclude Include="include\game.h" />
     <ClInclude Include="include\renderer.h" />
     <ClInclude Include="include\settings.h" />
     <ClInclude Include="include\utils.h" />

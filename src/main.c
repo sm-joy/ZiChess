@@ -5,7 +5,7 @@
 #include <SDL_ttf.h>
 
 #include "../include/Renderer.h"
-#include "../include/core.h"
+#include "../include/game.h"
 
 
 

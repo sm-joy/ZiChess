@@ -1,36 +1,24 @@
 #include "../include/core.h"
 
-
-Renderer* renderer = NULL;
-SDL_Texture* boardtex = NULL;
-SDL_Texture* piecetex = NULL;
-SDL_Event event;
-
 Piece kw = { WHITE | KING, {0, 0, 333, 334} };
 Piece kb = { BLACK | KING, {0, 334, 333, 334} };
-Piece qw = {WHITE | QUEEN, {333, 0, 333, 334}};
-Piece qb = {BLACK | QUEEN, {333, 334, 333, 334}};
-Piece pw = {WHITE | PAWN, {1665, 0, 333, 334}};
-Piece pb = {BLACK | PAWN, {1665, 334, 333, 334}};
-Piece bw = {WHITE | BISHOP, {666, 0, 333, 334}};
-Piece bb = {BLACK | BISHOP, {666, 334, 333, 334}};
-Piece nw = {WHITE | KNIGHT, {999, 0, 333, 334}};
-Piece nb = {BLACK | KNIGHT, {999, 334, 333, 334}};
-Piece rw = {WHITE | ROOK, {1332, 0, 333, 334}};
+Piece qw = { WHITE | QUEEN, {333, 0, 333, 334} };
+Piece qb = { BLACK | QUEEN, {333, 334, 333, 334} };
+Piece pw = { WHITE | PAWN, {1665, 0, 333, 334} };
+Piece pb = { BLACK | PAWN, {1665, 334, 333, 334} };
+Piece bw = { WHITE | BISHOP, {666, 0, 333, 334} };
+Piece bb = { BLACK | BISHOP, {666, 334, 333, 334} };
+Piece nw = { WHITE | KNIGHT, {999, 0, 333, 334} };
+Piece nb = { BLACK | KNIGHT, {999, 334, 333, 334} };
+Piece rw = { WHITE | ROOK, {1332, 0, 333, 334} };
 Piece rb = { BLACK | ROOK, {1332, 334, 333, 334} };
 Piece none = { NONE, {0, 0, 0, 0} };
 
-SDL_Rect defaultRect = { 0, 0, 0, 0 };
-Piece defaultPiece = { NONE, {0, 0, 0, 0} };
-
-CellState cell[64] = { {NONE, {0,0,0,}}, {0,0,0,0} };
-const char* startingFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+static int getPieceColor(CellState* cell) {
+    return cell->piece.state & (WHITE | BLACK);
+}
 
 void LoadPositionFromFen(const char* fen, CellState *board) {
-    static char str_copy[100];
-    strcpy_s(str_copy, 100, fen);
-
-    /*char* positions = strtok(str_copy, ' ');*/ // doesnt work
     int file = 0, rank = 7;
 
     for (int i = 0; i < strlen(fen); ++i) {
@@ -38,8 +26,7 @@ void LoadPositionFromFen(const char* fen, CellState *board) {
         if (symbol == ' ') {
             break;
         }
-        
-        if ( symbol == '/') {
+        else if ( symbol == '/') {
             file = 0;
             rank--;
         }
@@ -48,7 +35,7 @@ void LoadPositionFromFen(const char* fen, CellState *board) {
                 file += (int)(symbol - '0'); // converting to int if it is a number
             }
             else {
-                int index = file * 8 + rank;
+                int index = rank * 8 + file;
                 switch (symbol) {
                     case 'r':
                         board[index].piece = rb;
@@ -98,89 +85,72 @@ void LoadPositionFromFen(const char* fen, CellState *board) {
     }
 }
 
-
-bool initialize_game() {
-	renderer = createRenderer("Chess", winsize.width, winsize.height, NULL, NULL, 0);
-	if (renderer == NULL) {
-		return false;
-	}
-
-    for (int i = 0; i < 8; ++i) {
-        for (int j = 0; j < 8; ++j) {
-            int index = i * 8 + j; // i*cols+j
-            (cell[index]).dstRect.x = i * squareSize;
-            (cell[index]).dstRect.y = j * squareSize;
-            (cell[index]).dstRect.w = squareSize;
-            (cell[index]).dstRect.h = squareSize;
-        }
+bool getCellPressed(int* row, int* col) {
+    int mouseX, mouseY;
+    SDL_GetMouseState(&mouseX, &mouseY);
+    (*row) = (int)(mouseY / squareSize);
+    (*col) = (int)(mouseX / squareSize);
+    if (0 <= (*row) && (*row) < 8 && 0 <= (*col) && (*col) < 8) {
+        return true;
     }
-
-    LoadPositionFromFen(startingFen, cell);
-
-    boardtex = createboardTexture(renderer);
-    piecetex = loadTexture(renderer, pieceImagePath);
-
-    return true;
+    else {
+        return false;
+    }
 }
 
-Scene run_game() {
-
-    bool run = true;
-    SDL_Color bgColor = { 55, 61, 99, 255 };
-       
-    while (run) {
-        // event handling
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT) run = false;
-        }
-
-        //update
-
-
-        //rendering
-        setBackgroundColor(renderer, &bgColor);
-        renderTextureEx(renderer, boardtex, 0, 0, (squareSize * 8), (squareSize * 8));
-        
-        for (int i = 0; i < 8; ++i) {
-            for (int j = 0; j < 8; ++j) {
-                int index = i * 8 + j;
-                if (cell[index].piece.state != NONE) {
-                    renderTextureEa(renderer, piecetex, &(cell[index].piece.srcRect), &(cell[index].dstRect));
-                }
-            }
-        }
-
-        displayWindow(renderer);
+bool markSelected(CellState* cell, int row, int col) {
+    int index = 8 * row + col;
+    if (cell[index].piece.state != NONE) {
+        cell[index].selected = true;
+        cell[index].tileColor = selectedColor;
+        return true;
     }
-
-    return QUIT;
+    else {
+        return false;
+    }
 }
 
 
-Scene runMainMenu() {
-    bool run = true;
-    while (run) {
+void movePiece(CellState* cell, int fromRow, int fromCol, int toRow, int toCol, Mix_Chunk* moveSound, Mix_Chunk* captureSound, Mix_Chunk* promoteSound) {
+    int fromIndex = fromRow * 8 + fromCol;
+    int toIndex = toRow * 8 + toCol;
 
-        // event handling
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT) run = false;
-        }
+    cell[fromIndex].selected = false;
+    cell[fromIndex].tileColor = (fromRow + fromCol) % 2 == 0 ? tileColor1 : tileColor2;
 
-        //update
-
-
-        //rendering
-        clearWindow(renderer);
-
-        renderTextureEx(renderer, boardtex, 0, 0, (squareSize * 8), (squareSize * 8));
-
-        displayWindow(renderer);
+    if (fromIndex == toIndex || getPieceColor(&cell[fromIndex]) == getPieceColor(&cell[toIndex])) {
+        return;
+    }
+    else if (cell[toIndex].piece.state == NONE) {
+        playSound(moveSound);
+    }
+    else if (fromIndex == toIndex || getPieceColor(&cell[fromIndex]) != getPieceColor(&cell[toIndex])) {
+        playSound(captureSound);
     }
 
-    return QUIT;
+    if (cell[fromIndex].piece.state == (WHITE | PAWN) && toRow == 7) {
+        cell[toIndex].piece = qw; // Promote to white queen
+        playSound(promoteSound);
+    }
+    else if (cell[fromIndex].piece.state == (BLACK | PAWN) && toRow == 0) {
+        cell[toIndex].piece = qb; // Promote to black queen
+        playSound(promoteSound);
+    }
+    else {
+        cell[toIndex].piece = cell[fromIndex].piece;
+    }
+    cell[fromIndex].piece.state = NONE;
+    cell[fromIndex].piece.srcRect = (SDL_Rect){ 0, 0, 0, 0 };
+    printf("Moving piece from [%d, %d] (index %d) to [%d, %d] (index %d)\n", fromRow, fromCol, fromIndex, toRow, toCol, toIndex);
 }
 
-void clean()
-{
-    destroyRenderer(renderer);
+
+static bool isValidMove(int targetIndex, CellState* cell, int pieceColor) {
+    return (targetIndex >= 0 && targetIndex < 64) && (cell[targetIndex].piece.state == NONE || getPieceColor(&cell[targetIndex]) != pieceColor);
+}
+
+Move** generateMoves() {
+    int maxMoves = 64;
+    Move** moves = (Move**)malloc(maxMoves * sizeof(Move*));
+    return moves;
 }

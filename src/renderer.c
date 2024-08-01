@@ -20,6 +20,7 @@ Renderer* createRenderer(const char* pWinTitle, int pWinWidth, int pWinHeight, c
         renderer = NULL;
         return NULL;
     }
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
 
     int imageFormats = IMG_INIT_JPG | IMG_INIT_PNG | IMG_INIT_TIF | IMG_INIT_WEBP;
     if (!(IMG_Init(imageFormats) & imageFormats)) {
@@ -61,6 +62,9 @@ Renderer* createRenderer(const char* pWinTitle, int pWinWidth, int pWinHeight, c
         free(renderer);
         renderer = NULL;
         return NULL;
+    }
+    if (SDL_SetRenderDrawBlendMode(renderer->renderer, SDL_BLENDMODE_BLEND)) {
+        fprintf(stderr, "Error enabling alpha belnding: %s\n", SDL_GetError());
     }
 
 
@@ -216,4 +220,6 @@ void renderTextureEa(Renderer* renderer, SDL_Texture* pTexture, SDL_Rect* srcRec
 {
     SDL_RenderCopy(renderer->renderer, pTexture, srcRect, dstRect);
 }
+
+
 

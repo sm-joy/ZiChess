@@ -2,7 +2,7 @@
 
 
 char* duplicateString(const char* str) {
-    int len = strlen(str) + 1;
+    size_t len = strlen(str) + 1;
     char* destStr = (char*)malloc(len);
     if (destStr == NULL) return NULL;
     strcpy_s(destStr, len-1, str);
@@ -31,7 +31,7 @@ bool addText(Renderer* renderer, Text* textobj) {
     }
 
     Text** newptr = (Text**)realloc(renderer->createdTexts, (renderer->numTexts + 1) * sizeof(Text*));
-    if (newptr = NULL) {
+    if (newptr == NULL) {
         fprintf(stderr, "Error Creating Text! Realloc Failed: %s\n", SDL_GetError());
         return false;
     }
