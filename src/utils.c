@@ -1,11 +1,13 @@
 #include "../include/utils.h"
 
 
+
+
 char* duplicateString(const char* str) {
     size_t len = strlen(str) + 1;
     char* destStr = (char*)malloc(len);
     if (destStr == NULL) return NULL;
-    strcpy_s(destStr, len-1, str);
+    strcpy_s(destStr, len-2, str);
     return destStr;
 }
 
@@ -25,21 +27,7 @@ bool addTexture(Renderer* renderer, SDL_Texture* texture) {
     return true;
 }
 
-bool addText(Renderer* renderer, Text* textobj) {
-    if (textobj == NULL) {
-        return false;
-    }
 
-    Text** newptr = (Text**)realloc(renderer->createdTexts, (renderer->numTexts + 1) * sizeof(Text*));
-    if (newptr == NULL) {
-        fprintf(stderr, "Error Creating Text! Realloc Failed: %s\n", SDL_GetError());
-        return false;
-    }
-
-    renderer->createdTexts = newptr;
-    renderer->createdTexts[renderer->numTexts++] = textobj;
-    return true;
-}
 
 
 SDL_Texture* loadTexture(Renderer* renderer, const char* pFilePath) {
@@ -90,54 +78,5 @@ SDL_Texture* createboardTexture(Renderer* renderer) {
     }
 
     return texture;
-}
-
-SDL_Texture* createTextTxture(Renderer* renderer, const char* text, SDL_Color* color) {
-    SDL_Surface* textSurface = TTF_RenderText_Blended(renderer->font, text, *color);
-    if (textSurface == NULL) {
-        fprintf(stderr, "Cannot Render ttf_rendertext_blended! Error: %s\n", TTF_GetError());
-        return NULL;
-    }
-
-    SDL_Texture* textTexture = SDL_CreateTextureFromSurface(renderer->renderer, textSurface);
-    if (textTexture == NULL) {
-        fprintf(stderr, "Cannot convert surface to texture! Error: %s\n", SDL_GetError());
-        SDL_FreeSurface(textSurface);
-        return NULL;
-    }
-
-    SDL_FreeSurface(textSurface);
-    return textTexture;
-}
-
-Text* createText(Renderer* renderer, const char* text, SDL_Color* color, TTF_Font* font)
-{
-    Text* textobj = NULL;
-    textobj = (Text*)malloc(sizeof(Text));
-
-    if (textobj == NULL) {
-        fprintf(stderr, "Malloc Failed while allocating Text Object!\n");
-        return NULL;
-    }
-
-    textobj->text = duplicateString(text);
-    textobj->color = color;
-    textobj->font = font;
-    textobj->texture = createTextTxture(renderer, text, color);
-
-    if (textobj->texture) {
-        SDL_QueryTexture(textobj->texture, NULL, NULL, &(textobj->width), &(textobj->height));
-    }
-    else {
-        textobj->width = 0;
-        textobj->height = 0;
-    }
-
-    if (!addText) {
-        destroyText(textobj);
-        return NULL;
-    }
-
-    return textobj;
 }
 

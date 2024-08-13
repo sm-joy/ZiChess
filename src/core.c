@@ -1,24 +1,37 @@
 #include "../include/core.h"
 
-Piece kw = { WHITE | KING, {0, 0, 333, 334} };
-Piece kb = { BLACK | KING, {0, 334, 333, 334} };
-Piece qw = { WHITE | QUEEN, {333, 0, 333, 334} };
-Piece qb = { BLACK | QUEEN, {333, 334, 333, 334} };
-Piece pw = { WHITE | PAWN, {1665, 0, 333, 334} };
-Piece pb = { BLACK | PAWN, {1665, 334, 333, 334} };
-Piece bw = { WHITE | BISHOP, {666, 0, 333, 334} };
-Piece bb = { BLACK | BISHOP, {666, 334, 333, 334} };
-Piece nw = { WHITE | KNIGHT, {999, 0, 333, 334} };
-Piece nb = { BLACK | KNIGHT, {999, 334, 333, 334} };
-Piece rw = { WHITE | ROOK, {1332, 0, 333, 334} };
-Piece rb = { BLACK | ROOK, {1332, 334, 333, 334} };
-Piece none = { NONE, {0, 0, 0, 0} };
+Piece kw = { WHITE, KING, {0, 0, 333, 334} };
+Piece kb = { BLACK, KING, {0, 334, 333, 334} };
+Piece qw = { WHITE, QUEEN, {333, 0, 333, 334} };
+Piece qb = { BLACK, QUEEN, {333, 334, 333, 334} };
+Piece pw = { WHITE, PAWN, {1665, 0, 333, 334} };
+Piece pb = { BLACK, PAWN, {1665, 334, 333, 334} };
+Piece bw = { WHITE, BISHOP, {666, 0, 333, 334} };
+Piece bb = { BLACK, BISHOP, {666, 334, 333, 334} };
+Piece nw = { WHITE, KNIGHT, {999, 0, 333, 334} };
+Piece nb = { BLACK, KNIGHT, {999, 334, 333, 334} };
+Piece rw = { WHITE, ROOK, {1332, 0, 333, 334} };
+Piece rb = { BLACK, ROOK, {1332, 334, 333, 334} };
+Piece none = { NOCOLOR, NONE, {0, 0, 0, 0} };
 
-static int getPieceColor(CellState* cell) {
-    return cell->piece.state & (WHITE | BLACK);
+Mixer* mixer = NULL;
+Mix_Chunk* moveSelfSound = NULL;
+Mix_Chunk* captureSound = NULL;
+Mix_Chunk* promoteSound = NULL;
+
+void CoreInit() {
+    mixer = createMixer();
+    moveSelfSound = loadSound(mixer, moveSelfSoundPath);
+    captureSound = loadSound(mixer, captureSoundPath);
+    promoteSound = loadSound(mixer, promoteSoundPath);
 }
 
-void LoadPositionFromFen(const char* fen, CellState *board) {
+void destroyCore() {
+    destroyMixer(mixer);
+}
+
+
+void loadPositionFromFen(const char* fen, CellState *board) {
     int file = 0, rank = 7;
 
     for (int i = 0; i < strlen(fen); ++i) {
@@ -100,9 +113,8 @@ bool getCellPressed(int* row, int* col) {
 
 bool markSelected(CellState* cell, int row, int col) {
     int index = 8 * row + col;
-    if (cell[index].piece.state != NONE) {
-        cell[index].selected = true;
-        cell[index].tileColor = selectedColor;
+    if (cell[index].piece.type != NONE) {
+        cell[index].isSelected = true;
         return true;
     }
     else {
@@ -111,46 +123,637 @@ bool markSelected(CellState* cell, int row, int col) {
 }
 
 
-void movePiece(CellState* cell, int fromRow, int fromCol, int toRow, int toCol, Mix_Chunk* moveSound, Mix_Chunk* captureSound, Mix_Chunk* promoteSound) {
+static void promotePawn(CellState* cell, int targetRow, int tragetCol, PieceColor currentPieceColor) {
+
+    playSound(promoteSound);
+}
+
+void movePiece(CellState* cell, int fromRow, int fromCol, int toRow, int toCol) {
     int fromIndex = fromRow * 8 + fromCol;
     int toIndex = toRow * 8 + toCol;
 
-    cell[fromIndex].selected = false;
-    cell[fromIndex].tileColor = (fromRow + fromCol) % 2 == 0 ? tileColor1 : tileColor2;
 
-    if (fromIndex == toIndex || getPieceColor(&cell[fromIndex]) == getPieceColor(&cell[toIndex])) {
+    if (fromIndex == toIndex || cell[fromIndex].piece.color == cell[toIndex].piece.color) {
         return;
     }
-    else if (cell[toIndex].piece.state == NONE) {
-        playSound(moveSound);
+    else if (cell[toIndex].piece.type == NONE) {
+        playSound(moveSelfSound);
     }
-    else if (fromIndex == toIndex || getPieceColor(&cell[fromIndex]) != getPieceColor(&cell[toIndex])) {
+    else if (fromIndex == toIndex || cell[fromIndex].piece.color != cell[toIndex].piece.color) {
         playSound(captureSound);
     }
 
-    if (cell[fromIndex].piece.state == (WHITE | PAWN) && toRow == 7) {
+    if (cell[fromIndex].piece.type == PAWN && cell[fromIndex].piece.color == WHITE && toRow == 7) {
         cell[toIndex].piece = qw; // Promote to white queen
         playSound(promoteSound);
     }
-    else if (cell[fromIndex].piece.state == (BLACK | PAWN) && toRow == 0) {
+    else if (cell[fromIndex].piece.type == PAWN && cell[fromIndex].piece.color == BLACK && toRow == 0) {
         cell[toIndex].piece = qb; // Promote to black queen
         playSound(promoteSound);
     }
     else {
         cell[toIndex].piece = cell[fromIndex].piece;
     }
-    cell[fromIndex].piece.state = NONE;
+    cell[fromIndex].piece.type = NONE;
+    cell[fromIndex].piece.color = NOCOLOR;
     cell[fromIndex].piece.srcRect = (SDL_Rect){ 0, 0, 0, 0 };
-    printf("Moving piece from [%d, %d] (index %d) to [%d, %d] (index %d)\n", fromRow, fromCol, fromIndex, toRow, toCol, toIndex);
+    //printf("Moving piece from [%d, %d] (index %d) to [%d, %d] (index %d)\n", fromRow, fromCol, fromIndex, toRow, toCol, toIndex);
 }
 
+static Move* createMove(int startingIndex, int targetIndex) {
+    Move* newMove = (Move*)malloc(sizeof(Move));
+    if (newMove == NULL) {
+        printf("Memory allocation failed\n");
+        return NULL;
+    }
 
-static bool isValidMove(int targetIndex, CellState* cell, int pieceColor) {
-    return (targetIndex >= 0 && targetIndex < 64) && (cell[targetIndex].piece.state == NONE || getPieceColor(&cell[targetIndex]) != pieceColor);
+    newMove->startingCell = startingIndex;
+    newMove->targetCell = targetIndex;
+    return newMove;
 }
 
-Move** generateMoves() {
-    int maxMoves = 64;
+void destroyMoves(CellState* cell, Move** moves, int moveCount) {
+    if (moves != NULL) {
+        for (int i = 0; i < moveCount; ++i) {
+            if (moves[i] != NULL) {
+                cell[moves[i]->targetCell].istarget = false;
+                free(moves[i]);
+                moves[i] = NULL;
+            }
+        }
+
+        free(moves);
+        moves = NULL;
+    }
+}
+
+static bool addMove(CellState* cell, Move** moves, int* moveCount, int startingIndex, int targetIndex) {
+    if (targetIndex < 0 || targetIndex >= 64) return false;
+    Move* newMove = createMove(startingIndex, targetIndex);
+
+    if (newMove == NULL) {
+        destroyMoves(cell, moves, *moveCount);
+        return false;
+    }
+
+    cell[targetIndex].istarget = true;
+    moves[(*moveCount)++] = newMove;
+    return true;
+}
+
+static MovesArray* generatePawnMoves(CellState* cell, int row, int col) {
+    int startingIndex = row * 8 + col;
+    int forwardDir = 0;
+    int topLeftDir = 0;
+    int topRightDir = 0;
+    int maxMoves = 0;
+    int leftDir = 0;
+    int rightDir = 0;
+
+    if (cell[startingIndex].piece.color == WHITE) {
+        forwardDir = 8;
+        topLeftDir = 7;
+        topRightDir = 9;
+        leftDir = 1;
+        rightDir = -1;
+        if (row == 1) {
+            maxMoves = 4;
+        }
+        else {
+            maxMoves = 3;
+        }
+    }
+    else {
+        forwardDir = -8;
+        topLeftDir = -9;
+        topRightDir = -7;
+        leftDir = -1;
+        rightDir = 1;
+        if (row == 6) {
+            maxMoves = 4;
+        }
+        else {
+            maxMoves = 3;
+        }
+    }
+
     Move** moves = (Move**)malloc(maxMoves * sizeof(Move*));
-    return moves;
+    if (moves == NULL) {
+        printf("Memory allocation failed\n");
+        return NULL;
+    }
+    int moveCount = 0;
+
+    int targetIndex = startingIndex + forwardDir;
+    if (cell[targetIndex].piece.type == NONE) {
+
+        addMove(cell, moves, &moveCount, startingIndex, targetIndex);
+
+        targetIndex += forwardDir;
+        if (maxMoves == 4) {
+            if (cell[targetIndex].piece.type == NONE) {
+                addMove(cell, moves, &moveCount, startingIndex, targetIndex);
+            }
+        }
+    }    
+    if (col > 0) {
+        targetIndex = startingIndex + topLeftDir;
+        if (targetIndex >= 0 && targetIndex < 64 && cell[targetIndex].piece.type != NONE) {
+            if (cell[targetIndex].piece.color != cell[startingIndex].piece.color) {
+                addMove(cell, moves, &moveCount, startingIndex, targetIndex);
+            }
+        }
+
+        // el passant (ill work on it later)
+        targetIndex = startingIndex + leftDir;
+        if (targetIndex >= 0 && targetIndex < 64 && cell[targetIndex].piece.type != NONE) {
+            if (cell[targetIndex].piece.color != cell[startingIndex].piece.color) {
+
+            }
+        }
+    }
+
+    if (col < 7) {
+        targetIndex = startingIndex + topRightDir;
+        if (cell[targetIndex].piece.color != cell[startingIndex].piece.color && cell[targetIndex].piece.type != NONE) {
+            addMove(cell, moves, &moveCount, startingIndex, targetIndex);
+        }
+    }
+
+    MovesArray* moveobj = (MovesArray*)malloc(sizeof(MovesArray));
+    if (moveobj == NULL) {
+        printf("Memory allocation failed\n");
+        destroyMoves(cell, moves, moveCount);
+        return NULL;
+    }
+
+    moveobj->moves = moves;
+    moveobj->moveCount = moveCount;
+
+    return moveobj;
+}
+
+static MovesArray* generateKingMoves(CellState* cell, int row, int col) {
+    int startingIndex = row * 8 + col;
+    PieceColor color = cell[startingIndex].piece.color;
+    int maxMoves = 8;
+
+    static const int rowOffsets[] = { -1, -1, -1, 0, 0, 1, 1, 1 };
+    static const int colOffsets[] = { -1, 0, 1, -1, 1, -1, 0, 1 };
+    
+    Move** moves = (Move**)malloc(maxMoves * sizeof(Move*));
+    if (moves == NULL) {
+        printf("Memory allocation failed\n");
+        return NULL;
+    }
+    int moveCount = 0;
+
+    for (int i = 0; i < 8; ++i) {
+        int newRow = row + rowOffsets[i];
+        int newCol = col + colOffsets[i];
+        if (newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8) {
+            int targetIndex = newRow * 8 + newCol;
+
+            if (cell[targetIndex].piece.type == NONE || cell[targetIndex].piece.color != color) {
+                addMove(cell, moves, &moveCount, startingIndex, targetIndex);
+            }
+        }
+    }
+    
+    MovesArray* moveobj = (MovesArray*)malloc(sizeof(MovesArray));
+    if (moveobj == NULL) {
+        printf("Memory allocation failed\n");
+        free(moves);
+        moves = NULL;
+        return NULL;
+    }
+
+    moveobj->moves = moves;
+    moveobj->moveCount = moveCount;
+    return moveobj;
+}
+
+static MovesArray* generateQueenMoves(CellState* cell, int row, int col) {
+    int startingIndex = row * 8 + col;
+    PieceColor currentPieceColor = cell[startingIndex].piece.color;
+    int maxMoves = 28;
+
+    Move** moves = (Move**)malloc(maxMoves * sizeof(Move*));
+    if (moves == NULL) {
+        printf("Memory allocation failed\n");
+        return NULL;
+    }
+    int moveCount = 0;
+
+    bool hLeft = true;
+    bool hRight = true;
+    bool vUp = true;
+    bool vDown = true;
+
+    for (int i = 1; i < 8; i++) {
+        // Horizontal Right
+        int targetIndex = row * 8 + (col + i);
+        if (hRight && col + i < 8) {
+            if (cell[targetIndex].piece.type == NONE) {
+                addMove(cell, moves, &moveCount, startingIndex, targetIndex);
+            }
+            else if (cell[targetIndex].piece.color == currentPieceColor) {
+                hRight = false;
+            }
+            else if (cell[targetIndex].piece.color != currentPieceColor) {
+                addMove(cell, moves, &moveCount, startingIndex, targetIndex);
+
+                hRight = false;
+            }
+        }
+
+        // Horizontal Left
+        targetIndex = row * 8 + (col - i);
+        if (hLeft && col - i >= 0) {
+            if (cell[targetIndex].piece.type == NONE) {
+                addMove(cell, moves, &moveCount, startingIndex, targetIndex);
+            }
+            else if (cell[targetIndex].piece.color == currentPieceColor) {
+                hLeft = false;
+            }
+            else if (cell[targetIndex].piece.color != currentPieceColor) {
+                addMove(cell, moves, &moveCount, startingIndex, targetIndex);
+
+                hLeft = false;
+            }
+        }
+
+        // Vertical Up
+        targetIndex = (row - i) * 8 + col;
+        if (vUp && row - i >= 0) {
+            if (cell[targetIndex].piece.type == NONE) {
+                addMove(cell, moves, &moveCount, startingIndex, targetIndex);
+            }
+            else if (cell[targetIndex].piece.color == currentPieceColor) {
+                vUp = false;
+            }
+            else if (cell[targetIndex].piece.color != currentPieceColor) {
+                addMove(cell, moves, &moveCount, startingIndex, targetIndex);
+
+                vUp = false;
+            }
+        }
+
+        // Vertical Down
+        targetIndex = (row + i) * 8 + col;
+        if (vDown && row + i < 8) {
+            if (cell[targetIndex].piece.type == NONE) {
+                addMove(cell, moves, &moveCount, startingIndex, targetIndex);
+            }
+            else if (cell[targetIndex].piece.color == currentPieceColor) {
+                vDown = false;
+            }
+            else if (cell[targetIndex].piece.color != currentPieceColor) {
+                addMove(cell, moves, &moveCount, startingIndex, targetIndex);
+
+                vDown = false;
+            }
+        }
+    }
+
+    bool topLeft = true;
+    bool topRight = true;
+    bool bottomLeft = true;
+    bool bottomRight = true;
+
+    for (int i = 1; i < 8; i++) {
+        // Top-left diagonal
+        if (topLeft && (row - i >= 0 && col - i >= 0)) {
+            int targetIndex = (row - i) * 8 + (col - i);
+            if (cell[targetIndex].piece.type == NONE) {
+                addMove(cell, moves, &moveCount, startingIndex, targetIndex);
+            }
+            else if (cell[targetIndex].piece.color == currentPieceColor) {
+                topLeft = false;
+            }
+            else if (cell[targetIndex].piece.color != currentPieceColor) {
+                addMove(cell, moves, &moveCount, startingIndex, targetIndex);
+
+                topLeft = false;
+            }
+
+        }
+        // Top-right diagonal
+        if (topRight && (row - i >= 0 && col + i < 8)) {
+            int targetIndex = (row - i) * 8 + (col + i);
+
+            if (cell[targetIndex].piece.type == NONE) {
+                addMove(cell, moves, &moveCount, startingIndex, targetIndex);
+            }
+            else if (cell[targetIndex].piece.color == currentPieceColor) {
+                topRight = false;
+            }
+            else if (cell[targetIndex].piece.color != currentPieceColor) {
+                addMove(cell, moves, &moveCount, startingIndex, targetIndex);
+                topRight = false;
+            }
+
+        }
+        // Bottom-left diagonal
+        if (bottomLeft && (row + i < 8 && col - i >= 0)) {
+            int targetIndex = (row + i) * 8 + (col - i);
+
+            if (cell[targetIndex].piece.type == NONE) {
+                addMove(cell, moves, &moveCount, startingIndex, targetIndex);
+            }
+            else if (cell[targetIndex].piece.color == currentPieceColor) {
+                bottomLeft = false;
+            }
+            else if (cell[targetIndex].piece.color != currentPieceColor) {
+                addMove(cell, moves, &moveCount, startingIndex, targetIndex);
+
+                bottomLeft = false;
+            }
+        }
+        // Bottom-right diagonal
+        if (bottomRight && (row + i < 8 && col + i < 8)) {
+            int targetIndex = (row + i) * 8 + (col + i);
+
+            if (cell[targetIndex].piece.type == NONE) {
+                addMove(cell, moves, &moveCount, startingIndex, targetIndex);
+            }
+            else if (cell[targetIndex].piece.color == currentPieceColor) {
+                bottomRight = false;
+            }
+            else if (cell[targetIndex].piece.color != currentPieceColor) {
+                addMove(cell, moves, &moveCount, startingIndex, targetIndex);
+
+                bottomRight = false;
+            }
+        }
+    }
+
+
+
+    MovesArray* moveobj = (MovesArray*)malloc(sizeof(MovesArray));
+    if (moveobj == NULL) {
+        printf("Memory allocation failed\n");
+        free(moves);
+        moves = NULL;
+        return NULL;
+    }
+
+    moveobj->moves = moves;
+    moveobj->moveCount = moveCount;
+    return moveobj;
+}
+
+static MovesArray* generateRookMoves(CellState* cell,int row, int col) {
+    int startingIndex = row * 8 + col;
+    PieceColor currentPieceColor = cell[startingIndex].piece.color;
+    int maxMoves = 14;
+
+    Move** moves = (Move**)malloc(maxMoves * sizeof(Move*));
+    if (moves == NULL) {
+        printf("Memory allocation failed\n");
+        return NULL;
+    }
+    int moveCount = 0;
+
+    bool hLeft = true;
+    bool hRight = true;
+    bool vUp = true;
+    bool vDown = true;
+
+    for (int i = 1; i < 8; i++) {
+        // Horizontal Right
+        int targetIndex = row * 8 + (col + i);
+        if (hRight && col + i < 8) {
+            if (cell[targetIndex].piece.type == NONE) {
+                addMove(cell, moves, &moveCount, startingIndex, targetIndex);
+            }
+            else if (cell[targetIndex].piece.color == currentPieceColor) {
+                hRight = false;
+            }
+            else if (cell[targetIndex].piece.color != currentPieceColor) {
+                addMove(cell, moves, &moveCount, startingIndex, targetIndex);
+
+                hRight = false;
+            }
+        }
+
+        // Horizontal Left
+        targetIndex = row * 8 + (col - i);
+        if (hLeft && col - i >= 0) {
+            if (cell[targetIndex].piece.type == NONE) {
+                addMove(cell, moves, &moveCount, startingIndex, targetIndex);
+            }
+            else if (cell[targetIndex].piece.color == currentPieceColor) {
+                hLeft = false;
+            }
+            else if (cell[targetIndex].piece.color != currentPieceColor) {
+                addMove(cell, moves, &moveCount, startingIndex, targetIndex);
+
+                hLeft = false;
+            }
+        }
+
+        // Vertical Up
+        targetIndex = (row - i) * 8 + col;
+        if (vUp && row - i >= 0) {
+            if (cell[targetIndex].piece.type == NONE) {
+                addMove(cell, moves, &moveCount, startingIndex, targetIndex);
+            }
+            else if (cell[targetIndex].piece.color == currentPieceColor) {
+                vUp = false;
+            }
+            else if (cell[targetIndex].piece.color != currentPieceColor) {
+                addMove(cell, moves, &moveCount, startingIndex, targetIndex);
+
+                vUp = false;
+            }
+        }
+
+        // Vertical Down
+        targetIndex = (row + i) * 8 + col;
+        if (vDown && row + i < 8) {
+            if (cell[targetIndex].piece.type == NONE) {
+                addMove(cell, moves, &moveCount, startingIndex, targetIndex);
+            }
+            else if (cell[targetIndex].piece.color == currentPieceColor) {
+                vDown = false;
+            }
+            else if (cell[targetIndex].piece.color != currentPieceColor) {
+                addMove(cell, moves, &moveCount, startingIndex, targetIndex);
+
+                vDown = false;
+            }
+        }
+    }
+
+
+    MovesArray* moveobj = (MovesArray*)malloc(sizeof(MovesArray));
+    if (moveobj == NULL) {
+        printf("Memory allocation failed\n");
+        free(moves);
+        moves = NULL;
+        return NULL;
+    }
+
+    moveobj->moves = moves;
+    moveobj->moveCount = moveCount;
+    return moveobj;
+}
+
+static MovesArray* generateBishopMoves(CellState* cell, int row, int col) {
+    int startingIndex = row * 8 + col;
+    PieceColor currentPieceColor = cell[startingIndex].piece.color;
+    int maxMoves = 14;
+
+    Move** moves = (Move**)malloc(maxMoves * sizeof(Move*));
+    if (moves == NULL) {
+        printf("Memory allocation failed\n");
+        return NULL;
+    }
+    int moveCount = 0;
+
+    bool topLeft = true;
+    bool topRight = true;
+    bool bottomLeft = true;
+    bool bottomRight = true;
+
+    for (int i = 1; i < 8; i++) {
+        // Top-left diagonal
+        if (topLeft && (row - i >= 0 && col - i >= 0)) {
+            int targetIndex = (row - i) * 8 + (col - i);
+            if (cell[targetIndex].piece.type == NONE) {
+                addMove(cell, moves, &moveCount, startingIndex, targetIndex);
+            }
+            else if (cell[targetIndex].piece.color == currentPieceColor) {
+                topLeft = false;
+            }
+            else if (cell[targetIndex].piece.color != currentPieceColor) {
+                addMove(cell, moves, &moveCount, startingIndex, targetIndex);
+
+                topLeft = false;
+            }
+
+        }
+        // Top-right diagonal
+        if (topRight && (row - i >= 0 && col + i < 8)) {
+            int targetIndex = (row - i) * 8 + (col + i);
+
+            if (cell[targetIndex].piece.type == NONE) {
+                addMove(cell, moves, &moveCount, startingIndex, targetIndex);
+            }
+            else if (cell[targetIndex].piece.color == currentPieceColor) {
+                topRight = false;
+            }
+            else if (cell[targetIndex].piece.color != currentPieceColor) {
+                addMove(cell, moves, &moveCount, startingIndex, targetIndex);
+                topRight = false;
+            }
+
+        }
+        // Bottom-left diagonal
+        if (bottomLeft && (row + i < 8 && col - i >= 0)) {
+            int targetIndex = (row + i) * 8 + (col - i);
+
+            if (cell[targetIndex].piece.type == NONE) {
+                addMove(cell, moves, &moveCount, startingIndex, targetIndex);
+            }
+            else if (cell[targetIndex].piece.color == currentPieceColor) {
+                bottomLeft = false;
+            }
+            else if (cell[targetIndex].piece.color != currentPieceColor) {
+                addMove(cell, moves, &moveCount, startingIndex, targetIndex);
+
+                bottomLeft = false;
+            }
+        }
+        // Bottom-right diagonal
+        if (bottomRight && (row + i < 8 && col + i < 8)) {
+            int targetIndex = (row + i) * 8 + (col + i);
+
+            if (cell[targetIndex].piece.type == NONE) {
+                addMove(cell, moves, &moveCount, startingIndex, targetIndex);
+            }
+            else if (cell[targetIndex].piece.color == currentPieceColor) {
+                bottomRight = false;
+            }
+            else if (cell[targetIndex].piece.color != currentPieceColor) {
+                addMove(cell, moves, &moveCount, startingIndex, targetIndex);
+
+                bottomRight = false;
+            }
+        }
+    }
+
+    MovesArray* moveobj = (MovesArray*)malloc(sizeof(MovesArray));
+    if (moveobj == NULL) {
+        printf("Memory allocation failed\n");
+        free(moves);
+        moves = NULL;
+        return NULL;
+    }
+
+    moveobj->moves = moves;
+    moveobj->moveCount = moveCount;
+    return moveobj;
+}
+
+static MovesArray* generateKnightMoves(CellState* cell, int row, int col) {
+    int startingIndex = row * 8 + col;
+    PieceColor currentPieceColor = cell[startingIndex].piece.color;
+    int maxMoves = 8;
+    static const int rowOffsets[] = { 2, 2, -2, -2, 1, 1, -1, -1 };
+    static const int colOffsets[] = { 1, -1, 1, -1, 2, -2, 2, -2 };
+
+    Move** moves = (Move**)malloc(maxMoves * sizeof(Move*));
+    if (moves == NULL) {
+        printf("Memory allocation failed\n");
+        return NULL;
+    }
+    int moveCount = 0;
+
+    for (int i = 0; i < 8; ++i) {
+        int newRow = row + rowOffsets[i];
+        int newCol = col + colOffsets[i];
+
+        if (newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8) {
+            int targetIndex = newRow * 8 + newCol;
+
+            if (cell[targetIndex].piece.color != currentPieceColor) {
+                addMove(cell, moves, &moveCount, startingIndex, targetIndex);
+            }
+        }
+    }
+
+    MovesArray* moveobj = (MovesArray*)malloc(sizeof(MovesArray));
+    if (moveobj == NULL) {
+        printf("Memory allocation failed\n");
+        free(moves);
+        moves = NULL;
+        return NULL;
+    }
+
+    moveobj->moves = moves;
+    moveobj->moveCount = moveCount;
+    return moveobj;
+}
+
+MovesArray* generateMoves(CellState* cell, int row, int col) {
+    int startingIndex = row * 8 + col;
+    switch (cell[startingIndex].piece.type) {
+    case PAWN:
+        return generatePawnMoves(cell, row, col);
+    case KING:
+        return generateKingMoves(cell,  row, col);
+    case QUEEN:
+        return generateQueenMoves(cell, row, col);
+    case ROOK:
+        return generateRookMoves(cell, row, col);
+    case BISHOP:
+        return generateBishopMoves(cell, row, col);
+    case KNIGHT:
+        return generateKnightMoves(cell, row, col);
+    default:
+        return NULL;
+    }
+    
 }

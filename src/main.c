@@ -11,7 +11,7 @@
 
 int main(int argc, char* argv[]) {    
 
-    Scene currentScene = MAIN_GAME;
+    Scene currentScene = MAIN_MENU;
     initialize_game();
 
     while (true) {

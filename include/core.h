@@ -15,45 +15,51 @@
 
 #define index(row, col) row * 8 + col
 
-typedef enum CHESS_PIECE_STATE {
-	NONE = 0,
-	KING = 1,
-	QUEEN = 2,
-	PAWN = 3,
-	KNIGHT = 4,
-	BISHOP = 5,
-	ROOK = 6,
+typedef struct POSITION{
+	unsigned int x, y;
+} Pos;
 
-	WHITE = 8,
-	BLACK = 16
-} PieceState;
+
+typedef enum CHESS_PIECE_Type {
+	NONE,
+	KING,
+	QUEEN,
+	PAWN,
+	KNIGHT,
+	BISHOP,
+	ROOK
+} PieceType;
+
+typedef enum CHESS_PIECE_COLOR {
+	NOCOLOR,
+	WHITE,
+	BLACK
+} PieceColor;
 
 typedef struct CHESS_PIECE {
-	PieceState state;// or can be called id = COLOR | PIECE or NONE (0)
-	SDL_Rect srcRect; // from the texture
+	PieceColor color;
+	PieceType type;
+	SDL_Rect srcRect;
 } Piece;
 
 typedef struct {
 	Piece piece;
 	SDL_Rect dstRect;
-	bool selected;
-	SDL_Color tileColor;
+	bool isSelected;
+	bool istarget;
+	int index;
 } CellState;
 
-typedef enum {
-	UP = -8,
-	DOWN = 8,
-	RIGHT = 1,
-	LEFT = -1,
-	TOP_LEFT = -9,
-	TOP_RIGHT = -7,
-	BOTTOM_LEFT = 9,
-	BOTTOM_RIGHT = 7
-} Directions;
+
 
 typedef struct {
 	int startingCell, targetCell;
 } Move;
+
+typedef struct {
+	Move** moves;
+	int moveCount;
+} MovesArray;
 
 
 typedef enum SCENE_STATE {
@@ -63,9 +69,13 @@ typedef enum SCENE_STATE {
 	QUIT
 } Scene;
 
-void LoadPositionFromFen(const char* fen, CellState* board);
+void CoreInit();
+void destroyCore();
+
+void loadPositionFromFen(const char* fen, CellState* board);
 bool getCellPressed(int* row, int* col);
 bool markSelected(CellState* cell, int row, int col);
-void movePiece(CellState* cell, int fromRow, int fromCol, int toRow, int toCol, Mix_Chunk* moveSound, Mix_Chunk* captureSound, Mix_Chunk* promoteSound);
-Move** generateMoves();
+void movePiece(CellState* cell, int fromRow, int fromCol, int toRow, int toCol);
+MovesArray* generateMoves(CellState* cell, int row, int col);
+void destroyMoves(CellState* cell, Move** moves, int moveCount);
 #endif // CORE_H

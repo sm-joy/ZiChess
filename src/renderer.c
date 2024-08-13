@@ -1,6 +1,6 @@
 #include "../include/Renderer.h"
 
-Renderer* createRenderer(const char* pWinTitle, int pWinWidth, int pWinHeight, const char* pWinIconPath, const char* pFontPath, int pFontSize) {
+Renderer* createRenderer(const char* pWinTitle, int pWinWidth, int pWinHeight, const char* pWinIconPath) {
     Renderer* renderer = (Renderer*)malloc(sizeof(Renderer));
     if (!renderer) {
         fprintf(stderr, "Error allocating memory for Renderer\n");
@@ -8,7 +8,6 @@ Renderer* createRenderer(const char* pWinTitle, int pWinWidth, int pWinHeight, c
     }
 
     renderer->winIcon = NULL;
-    renderer->font = NULL;
     renderer->loadedTextures = NULL;
     renderer->createdTexts = NULL;
     renderer->numTexts = 0;
@@ -40,7 +39,12 @@ Renderer* createRenderer(const char* pWinTitle, int pWinWidth, int pWinHeight, c
     }
 
     renderer->window = NULL;
-    renderer->window = SDL_CreateWindow(pWinTitle, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, pWinWidth, pWinHeight, SDL_WINDOW_SHOWN);
+    renderer->window = SDL_CreateWindow(pWinTitle, 
+        SDL_WINDOWPOS_CENTERED, 
+        SDL_WINDOWPOS_CENTERED, 
+        pWinWidth, 
+        pWinHeight, 
+        SDL_WINDOW_SHOWN);
     if (renderer->window == NULL) {
         fprintf(stderr, "Error initializing SDL_Window: %s\n", SDL_GetError());
         TTF_Quit();
@@ -70,15 +74,6 @@ Renderer* createRenderer(const char* pWinTitle, int pWinWidth, int pWinHeight, c
 
     if (pWinIconPath != NULL) setWindowIcon(renderer, pWinIconPath);
 
-    if (pFontPath != NULL) {
-        if (pFontSize != 0) {
-            loadFont(renderer, pFontPath, pFontSize);
-        }
-        else {
-            fprintf(stderr, "Error: Font Path was given but no Font Size was given!\n");
-        }
-    }
-
     return renderer;
 }
 
@@ -89,7 +84,6 @@ void destroyRenderer(Renderer* renderer) {
         if (renderer->winIcon != NULL) SDL_FreeSurface(renderer->winIcon);
         if (renderer->window != NULL) SDL_DestroyWindow(renderer->window);
         if (renderer->renderer != NULL) SDL_DestroyRenderer(renderer->renderer);
-        if (renderer->font != NULL) TTF_CloseFont(renderer->font);
 
         destroyTextures(renderer);
         TTF_Quit();
@@ -138,8 +132,8 @@ void setRenderDrawColor(Renderer* renderer, SDL_Color* pColor) {
 }
 
 void setBackgroundColor(Renderer* renderer, SDL_Color* pColor) {
-    setRenderDrawColor(renderer, pColor);
-    clearWindow(renderer);
+    SDL_SetRenderDrawColor(renderer->renderer, pColor->r, pColor->g, pColor->b, pColor->a);
+    SDL_RenderClear(renderer->renderer);
 }
 
 void displayWindow(Renderer* renderer) {
@@ -184,8 +178,8 @@ void renderText(Renderer* renderer, Text* text, int posX, int posY) {
     renderTextureEx(renderer, text->texture, posX, posY, text->width, text->height);
 }
 
-void renderTextCenterRect(Renderer* renderer, const char* pText, SDL_Color* pColor, SDL_Rect* pRect) {
-    SDL_Surface* textSurface = TTF_RenderText_Blended(renderer->font, pText, *pColor);
+void renderTextCenterRect(Renderer* renderer, const char* pText, SDL_Color* pColor, SDL_Rect* pRect, TTF_Font* font) {
+    SDL_Surface* textSurface = TTF_RenderText_Blended(font, pText, *pColor);
     if (textSurface == NULL) {
         fprintf(stderr, "Cannot Render ttf_rendertext_blended! Error: %s\n", TTF_GetError());
         return;
@@ -208,17 +202,137 @@ void renderTextCenterRect(Renderer* renderer, const char* pText, SDL_Color* pCol
 }
 
 
-void loadFont(Renderer* renderer, const char* pFontPath, int pFontSize) {
-    renderer->font = TTF_OpenFont(pFontPath, pFontSize);
-    if (renderer->font == NULL) {
+TTF_Font* loadFont(Renderer* renderer, const char* pFontPath, int pFontSize) {
+     TTF_Font* font = TTF_OpenFont(pFontPath, pFontSize);
+    if (font == NULL) {
         fprintf(stderr, "Error Loading '%s' Font! Error: %s\n", pFontPath, TTF_GetError());
+        return NULL;
     }
+    return font;
 } 
 
 
 void renderTextureEa(Renderer* renderer, SDL_Texture* pTexture, SDL_Rect* srcRect, SDL_Rect* dstRect)
 {
     SDL_RenderCopy(renderer->renderer, pTexture, srcRect, dstRect);
+}
+
+
+SDL_Texture* createTextTxture(Renderer* renderer, const char* text, SDL_Color* color, TTF_Font* font) {
+    SDL_Surface* textSurface = TTF_RenderText_Blended(font, text, *color);
+    if (textSurface == NULL) {
+        fprintf(stderr, "Cannot Render ttf_rendertext_blended! Error: %s\n", TTF_GetError());
+        return NULL;
+    }
+
+    SDL_Texture* textTexture = SDL_CreateTextureFromSurface(renderer->renderer, textSurface);
+    if (textTexture == NULL) {
+        fprintf(stderr, "Cannot convert surface to texture! Error: %s\n", SDL_GetError());
+        SDL_FreeSurface(textSurface);
+        return NULL;
+    }
+
+    SDL_FreeSurface(textSurface);
+    return textTexture;
+}
+
+bool addText(Renderer* renderer, Text* textobj) {
+    if (textobj == NULL) {
+        return false;
+    }
+
+    Text** newptr = (Text**)realloc(renderer->createdTexts, (renderer->numTexts + 1) * sizeof(Text*));
+    if (newptr == NULL) {
+        fprintf(stderr, "Error Creating Text! Realloc Failed: %s\n", SDL_GetError());
+        return false;
+    }
+
+    renderer->createdTexts = newptr;
+    renderer->createdTexts[renderer->numTexts++] = textobj;
+    return true;
+}
+
+Text* createText(Renderer* renderer, const char* text, SDL_Color* color, TTF_Font* font)
+{
+    Text* textobj = NULL;
+    textobj = (Text*)malloc(sizeof(Text));
+
+    if (textobj == NULL) {
+        fprintf(stderr, "Malloc Failed while allocating Text Object!\n");
+        return NULL;
+    }
+
+    textobj->text = SDL_strdup(text);
+    textobj->color = color;
+    textobj->font = font;
+    textobj->texture = createTextTxture(renderer, text, color, textobj->font);
+
+    if (textobj->texture) {
+        SDL_QueryTexture(textobj->texture, NULL, NULL, &(textobj->width), &(textobj->height));
+    }
+    else {
+        textobj->width = 0;
+        textobj->height = 0;
+    }
+
+    if (!addText) {
+        destroyText(textobj);
+        return NULL;
+    }
+
+    return textobj;
+}
+
+
+Button* createButton(Renderer* renderer, const char* text, SDL_Color* buttonColor, SDL_Color* textColor, TTF_Font* font, int width, int height, int x, int y) {
+    Button* button = (Button*)malloc(sizeof(Button));
+    if (button == NULL) {
+        fprintf(stderr, "Failed to allocate memory for button\n");
+        return NULL;
+    }
+
+    Text* textobj = createText(renderer, text, textColor, font);
+    if (textobj == NULL) {
+        fprintf(stderr, "Failed to create button text\n");
+        return NULL;
+    }
+
+    button->text = textobj;
+    button->rect.x = x;
+    button->rect.y = y;
+    if (width == 0 && height == 0) {
+        button->rect.w = textobj->width;
+        button->rect.h = textobj->height;
+    }
+    button->color = *buttonColor;
+    button->isHovered = false;
+    button->isPressed = false;
+
+    button->hoverText = NULL;
+    button->pressText = NULL;
+
+    return button;
+}
+
+Button* createButtonEx(Renderer* renderer, int x, int y, int width, int height, Text* normalText, Text* hoverText, Text* pressText, SDL_Color* buttonColor) {
+    Button* button = (Button*)malloc(sizeof(Button));
+    if (button == NULL) {
+        fprintf(stderr, "Failed to allocate memory for button\n");
+        return NULL;
+    }
+    button->text = normalText;
+    button->rect.x = x;
+    button->rect.y = y;
+    if (height == 0 && width == 0) {
+        button->rect.w = normalText->width;
+        button->rect.h = normalText->height;
+    }
+    button->color = *buttonColor;
+    button->hoverText = hoverText;
+    button->pressText = pressText;
+    button->isHovered = false;
+    button->isPressed = false;
+    return button;
 }
 
 

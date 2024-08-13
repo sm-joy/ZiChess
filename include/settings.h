@@ -10,10 +10,15 @@ typedef struct WINDOW_DIMENSION {
 extern windowSize winsize;
 extern int squareSize;
 extern const char* pieceImagePath;
+extern const char* winIconPath;
+extern const char* montserratFontPath;
+extern const char* opensansFontPath;
 
 extern SDL_Color tileColor1;
 extern SDL_Color tileColor2;
 extern SDL_Color selectedColor;
+extern SDL_Color targetColor1;
+extern SDL_Color targetColor2;
 
 extern const char* captureSoundPath;
 extern const char* castleSoundPath;
