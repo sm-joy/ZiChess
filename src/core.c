@@ -19,11 +19,14 @@ Mix_Chunk* moveSelfSound = NULL;
 Mix_Chunk* captureSound = NULL;
 Mix_Chunk* promoteSound = NULL;
 
-void CoreInit() {
+Mixer* CoreInit() {
     mixer = createMixer();
     moveSelfSound = loadSound(mixer, moveSelfSoundPath);
     captureSound = loadSound(mixer, captureSoundPath);
     promoteSound = loadSound(mixer, promoteSoundPath);
+
+
+    return mixer;
 }
 
 void destroyCore() {

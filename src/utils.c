@@ -1,15 +1,21 @@
 #include "../include/utils.h"
 
+int randint(int min, int max) {
+    if (min > max) {
+        return min;
+    }
 
+    //xorshift32 algorithm
+    Uint32 seed = (uint32_t)time(NULL);
+    seed ^= (seed << 13);
+    seed ^= (seed >> 17);
+    seed ^= (seed << 5);
 
-
-char* duplicateString(const char* str) {
-    size_t len = strlen(str) + 1;
-    char* destStr = (char*)malloc(len);
-    if (destStr == NULL) return NULL;
-    strcpy_s(destStr, len-2, str);
-    return destStr;
+    Uint32 range = max - min + 1;
+    return ((int)(seed % range) + min);
 }
+
+
 
 bool addTexture(Renderer* renderer, SDL_Texture* texture) {
     if (texture == NULL) {
@@ -31,6 +37,11 @@ bool addTexture(Renderer* renderer, SDL_Texture* texture) {
 
 
 SDL_Texture* loadTexture(Renderer* renderer, const char* pFilePath) {
+    if (pFilePath == NULL) {
+        fprintf(stderr, "Error! Texture file path is null!\n");
+        return NULL;
+    }
+
     SDL_Texture* texture = IMG_LoadTexture(renderer->renderer, pFilePath);
     if (!addTexture(renderer, texture)) {
         fprintf(stderr, "Error Loading '%s' Texture! Error: %s\n", pFilePath, SDL_GetError());
@@ -40,6 +51,7 @@ SDL_Texture* loadTexture(Renderer* renderer, const char* pFilePath) {
 
 
 SDL_Texture* createboardTexture(Renderer* renderer) {
+    int squareSize = 74;
     int boardSize = squareSize * 8;
 
     SDL_PixelFormat* format = SDL_AllocFormat(SDL_PIXELFORMAT_RGBA8888);
@@ -79,4 +91,33 @@ SDL_Texture* createboardTexture(Renderer* renderer) {
 
     return texture;
 }
+
+
+char* getAbsolutePath(const char* relativePath) {
+    if (relativePath == NULL) {
+        fprintf(stderr, "Error! Relative path is null!\n");
+        return NULL;
+    }
+
+    char* basePath = SDL_GetBasePath();
+    if (basePath == NULL) {
+        fprintf(stderr, "Error getting working directory path!\n");
+        return NULL;
+    }
+
+    size_t size = strlen(relativePath) + strlen(basePath) + 1;
+    char* fullPath = (char*)malloc(size * sizeof(char));
+    if (fullPath == NULL) {
+        fprintf(stderr, "Error allocating memory for absolute path!\n");
+        SDL_free(basePath);
+        return NULL;
+    }
+
+    strcpy_s(fullPath, size, basePath);
+    SDL_free(basePath);
+    strcat_s(fullPath, size, relativePath);
+    return fullPath;
+}
+
+
 

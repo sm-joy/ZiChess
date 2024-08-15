@@ -27,14 +27,27 @@ typedef struct {
     bool isPressed;        
 } Button;
 
+typedef struct HORIZONTAL_SCROLLBAR {
+    unsigned int currentValue;
+    unsigned int maxValue;
+    SDL_Rect barRect;
+    SDL_Rect handleRect;
+    bool isDragging;
+    int dragOffsetX;
+    SDL_Color barColor;
+    SDL_Color handleColor;
+} hScrollbar;
+
 typedef struct SDL_RENDERER {
     SDL_Window* window;
     SDL_Renderer* renderer;
     SDL_Surface* winIcon;
     SDL_Texture** loadedTextures;
-    int numTextures;
+    size_t numTextures;
     Text** createdTexts;
-    int numTexts;
+    size_t numTexts;
+    Button** createdButtons;
+    size_t numButtons;
 } Renderer;
 
 
@@ -43,10 +56,11 @@ void destroyRenderer(Renderer* renderer);
 void clearWindow(Renderer* renderer);
 void setRenderDrawColor(Renderer* renderer, SDL_Color* pColor);
 void setBackgroundColor(Renderer* renderer, SDL_Color* pColor);
+void setBackgroundTexture(Renderer* renderer, SDL_Texture* bgTexture);
 void displayWindow(Renderer* renderer);
 TTF_Font* loadFont(Renderer* renderer, const char* pFontPath, int pFontSize);
 void setWindowIcon(Renderer* renderer, const char* pWinIconPath);
-void renderRect(Renderer* renderer, SDL_Rect* pRect, SDL_Color* pColor, int pFilled);
+void renderRect(Renderer* renderer, SDL_Rect* pRect, SDL_Color* pColor, bool pFilled);
 void renderText(Renderer* renderer, Text* text, int posX, int posY);
 void renderTextCenterRect(Renderer* renderer, const char* pText, SDL_Color* pColor, SDL_Rect* pRect, TTF_Font* font);
 void renderTextureEx(Renderer* renderer, SDL_Texture* pTexture, int pPosX, int pPosY, int pTextureWidth, int pTextureHeight);
@@ -67,6 +81,9 @@ Button* createButtonTx(Renderer* renderer, SDL_Texture* texture);
 Button* createButtonEx(Renderer* renderer, int x, int y, int width, int height, Text* normalText, Text* hoverText, Text* pressText, SDL_Color* buttonColor);
 
 void destroyButton(Button* button);
+void destroyButtons(Renderer* renderer);
 
+hScrollbar* createVScrollbar(Renderer* renderer, int x, int y, int width, int height, int maxValue, SDL_Color handleColor, SDL_Color barColor);
+void drawHScrollbar(Renderer* renderer, hScrollbar* scrollbar);
 
 #endif //RENDERER_H

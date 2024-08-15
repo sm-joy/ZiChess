@@ -8,9 +8,10 @@
 #include "core.h"
 #include "audio.h"
 
-bool initialize_game();
+bool initializeGame();
 Scene run_game();
 void clean();
+void initMenu();
 Scene runMainMenu();
 void renderFrame(Renderer* renderer, CellState* cell);
 

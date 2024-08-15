@@ -10,8 +10,10 @@ Renderer* createRenderer(const char* pWinTitle, int pWinWidth, int pWinHeight, c
     renderer->winIcon = NULL;
     renderer->loadedTextures = NULL;
     renderer->createdTexts = NULL;
+    renderer->createdButtons = NULL;
     renderer->numTexts = 0;
     renderer->numTextures = 0;
+    renderer->numButtons = 0;
 
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         fprintf(stderr, "Error initializing SDL: %s\n", SDL_GetError());
@@ -55,6 +57,9 @@ Renderer* createRenderer(const char* pWinTitle, int pWinWidth, int pWinHeight, c
         return NULL;
     }
 
+    SDL_SetWindowResizable(renderer->window, SDL_FALSE);
+
+
     renderer->renderer = NULL;
     renderer->renderer = SDL_CreateRenderer(renderer->window, -1, SDL_RENDERER_ACCELERATED);
     if (renderer->renderer == NULL) {
@@ -81,11 +86,10 @@ void destroyRenderer(Renderer* renderer) {
     if (renderer) {
         destroyTextures(renderer);
         destroyTexts(renderer);
+        destroyButtons(renderer);
         if (renderer->winIcon != NULL) SDL_FreeSurface(renderer->winIcon);
         if (renderer->window != NULL) SDL_DestroyWindow(renderer->window);
         if (renderer->renderer != NULL) SDL_DestroyRenderer(renderer->renderer);
-
-        destroyTextures(renderer);
         TTF_Quit();
         IMG_Quit();
         SDL_Quit();
@@ -150,7 +154,7 @@ void setWindowIcon(Renderer* renderer, const char* pWinIconPath) {
     }
 }
 
-void renderRect(Renderer* renderer, SDL_Rect* pRect, SDL_Color* pColor, int pFilled) {
+void renderRect(Renderer* renderer, SDL_Rect* pRect, SDL_Color* pColor, bool pFilled) {
     setRenderDrawColor(renderer, pColor);
     if (pFilled) {
         SDL_RenderFillRect(renderer->renderer, pRect);
@@ -162,7 +166,9 @@ void renderRect(Renderer* renderer, SDL_Rect* pRect, SDL_Color* pColor, int pFil
 
 void renderTextureEx(Renderer* renderer, SDL_Texture* pTexture, int pPosX, int pPosY, int pTextureWidth, int pTextureHeight) {
     SDL_Rect destinationRect = { pPosX, pPosY, pTextureWidth, pTextureHeight };
-    SDL_RenderCopy(renderer->renderer, pTexture, NULL, &destinationRect);
+    if (SDL_RenderCopy(renderer->renderer, pTexture, NULL, &destinationRect) != 0) {
+        fprintf(stderr, "Error rendering texture! Error: %s", SDL_GetError());
+    }
 }
 
 void renderTexture(Renderer* renderer, SDL_Texture* texture, int posX, int posY) {
@@ -243,7 +249,7 @@ bool addText(Renderer* renderer, Text* textobj) {
 
     Text** newptr = (Text**)realloc(renderer->createdTexts, (renderer->numTexts + 1) * sizeof(Text*));
     if (newptr == NULL) {
-        fprintf(stderr, "Error Creating Text! Realloc Failed: %s\n", SDL_GetError());
+        fprintf(stderr, "Error Creating Text Array! Realloc Failed: %s\n", SDL_GetError());
         return false;
     }
 
@@ -283,8 +289,34 @@ Text* createText(Renderer* renderer, const char* text, SDL_Color* color, TTF_Fon
     return textobj;
 }
 
+static bool addButton(Renderer* renderer, Button* button) {
+    if (renderer == NULL || button == NULL) {
+        fprintf(stderr, "Renderer or button is null!\n");
+        return false;
+    }
 
-Button* createButton(Renderer* renderer, const char* text, SDL_Color* buttonColor, SDL_Color* textColor, TTF_Font* font, int width, int height, int x, int y) {
+    Button** newptr = (Button**)realloc(renderer->createdButtons, (renderer->numButtons + 1) * sizeof(Button*));
+    if (newptr == NULL) {
+        fprintf(stderr, "Error Creating Button Array! Realloc Failed: %s\n", SDL_GetError());
+        return false;
+    }
+
+    renderer->createdButtons = newptr;
+    renderer->createdButtons[renderer->numButtons++] = button;
+    return true;
+}
+
+
+Button* createButton(
+    Renderer* renderer, 
+    const char* text, 
+    SDL_Color* buttonColor, 
+    SDL_Color* textColor, 
+    TTF_Font* font, 
+    int width, 
+    int height, 
+    int x, 
+    int y) {
     Button* button = (Button*)malloc(sizeof(Button));
     if (button == NULL) {
         fprintf(stderr, "Failed to allocate memory for button\n");
@@ -311,10 +343,29 @@ Button* createButton(Renderer* renderer, const char* text, SDL_Color* buttonColo
     button->hoverText = NULL;
     button->pressText = NULL;
 
+    if (!addButton(renderer, button)) {
+        destroyButton(button);
+        return NULL;
+    }
     return button;
 }
 
-Button* createButtonEx(Renderer* renderer, int x, int y, int width, int height, Text* normalText, Text* hoverText, Text* pressText, SDL_Color* buttonColor) {
+Button* createButtonTx(Renderer* renderer, SDL_Texture* texture)
+{
+
+    return NULL;
+}
+
+Button* createButtonEx(
+    Renderer* renderer, 
+    int x, 
+    int y, 
+    int width, 
+    int height, 
+    Text* normalText, 
+    Text* hoverText, 
+    Text* pressText, 
+    SDL_Color* buttonColor) {
     Button* button = (Button*)malloc(sizeof(Button));
     if (button == NULL) {
         fprintf(stderr, "Failed to allocate memory for button\n");
@@ -332,7 +383,84 @@ Button* createButtonEx(Renderer* renderer, int x, int y, int width, int height, 
     button->pressText = pressText;
     button->isHovered = false;
     button->isPressed = false;
+
+    if (!addButton(renderer, button)) {
+        destroyButton(button);
+        return NULL;
+    }
+
     return button;
+}
+
+void destroyButton(Button* button) {
+    if (button->text != NULL) destroyText(button->text);
+    if (button->hoverText != NULL) destroyText(button->hoverText);
+    if (button->pressText != NULL) destroyText(button->pressText);
+    free(button);
+    button = NULL;
+}
+
+void destroyButtons(Renderer* renderer) {
+    if (renderer->createdButtons) {
+        for (int i = 0; i < renderer->numButtons; ++i) {
+            destroyButton(renderer->createdButtons[i]);
+        }
+        free(renderer->createdButtons);
+        renderer->createdButtons = NULL;
+        renderer->numButtons = 0;
+    }
+}
+
+
+void setBackgroundTexture(Renderer* renderer, SDL_Texture* bgTexture) {
+    SDL_RenderClear(renderer->renderer);
+}
+
+
+hScrollbar* createVScrollbar(
+    Renderer* renderer, 
+    int x, 
+    int y, 
+    int width, 
+    int height, 
+    int maxValue, 
+    SDL_Color handleColor, 
+    SDL_Color barColor) {
+
+    if (renderer == NULL) {
+        fprintf(stderr, "Error! Renderer is null!\n");
+        return NULL;
+    }
+
+    hScrollbar* scrollbar = (hScrollbar*)malloc(sizeof(hScrollbar));
+    if (scrollbar == NULL) {
+        fprintf(stderr, "Error! Memory allocation failed for ScrollBar! Error: %s\n", SDL_GetError());
+        return NULL;
+    }
+
+    scrollbar->barRect.x = x;
+    scrollbar->barRect.y = y;
+    scrollbar->barRect.w = width;
+    scrollbar->barRect.h = height;
+
+    
+    scrollbar->handleRect.w = 20;
+    scrollbar->handleRect.h = height;
+    int maxHandleX = width - 20;
+    scrollbar->handleRect.x = x;//+ (scrollbar->currentValue * maxHandleX) / maxValue;
+    scrollbar->handleRect.y = y;
+
+    scrollbar->maxValue = maxValue;
+    scrollbar->currentValue = maxValue;
+    scrollbar->isDragging = 0;
+    scrollbar->dragOffsetX = 0;
+
+    return scrollbar;
+}
+
+void drawHScrollbar(Renderer* renderer, hScrollbar* scrollbar) {
+    renderRect(renderer, &scrollbar->barRect, &scrollbar->barColor, true);
+    renderRect(renderer, &scrollbar->handleRect, &scrollbar->handleColor, true);
 }
 
 

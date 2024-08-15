@@ -69,7 +69,7 @@ typedef enum SCENE_STATE {
 	QUIT
 } Scene;
 
-void CoreInit();
+Mixer* CoreInit();
 void destroyCore();
 
 void loadPositionFromFen(const char* fen, CellState* board);
@@ -78,4 +78,5 @@ bool markSelected(CellState* cell, int row, int col);
 void movePiece(CellState* cell, int fromRow, int fromCol, int toRow, int toCol);
 MovesArray* generateMoves(CellState* cell, int row, int col);
 void destroyMoves(CellState* cell, Move** moves, int moveCount);
+
 #endif // CORE_H

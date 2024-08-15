@@ -12,8 +12,9 @@
 int main(int argc, char* argv[]) {    
 
     Scene currentScene = MAIN_MENU;
-    initialize_game();
-
+    initSettings();
+    initializeGame();
+    initMenu();
     while (true) {
         if (currentScene == MAIN_MENU) {
             currentScene = runMainMenu();

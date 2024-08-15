@@ -6,9 +6,11 @@ SDL_Texture* piecetex = NULL;
 SDL_Event event;
 SDL_Color bgColor = { 55, 61, 99, 255 };
 
+//for game
 int boardLabeFontSize= 14;
-
-TTF_Font* fontMont = NULL;
+int menuTitleFontSize = 70;
+TTF_Font* fontMont14 = NULL;
+TTF_Font* fontMont70 = NULL;
 TTF_Font* fontSans = NULL;
 Text* rankLabelTexture[8] = { NULL };
 Text* fileLabelTexture[8] = { NULL };
@@ -16,12 +18,18 @@ static const char* rankLabelText[8] = { "8", "7", "6", "5", "4", "3", "2", "1" }
 static const char* fileLabelText[8] = { "a", "b", "c", "d", "e", "f", "g", "h" };
 Pos fileLabelPos[8] = {{0, 0}};
 Pos rankLabelPos[8] = {{0, 0}};
-
-
-
 CellState cell[64] = { {NOCOLOR, NONE, {0,0,0,0}}, {0,0,0,0}, false, false, 0};
 
 
+//for menu
+
+SDL_Texture* bgs[5] = {NULL};
+SDL_Texture* mainMenuBgs[4] = {NULL};
+SDL_Texture* optionMenuBgs[3] = {NULL};
+
+static Mixer* mixer = NULL;
+Mix_Music* frozenStar = NULL;
+Mix_Music* gymnopedieNo1 = NULL;
 
 void renderFrame(Renderer* renderer, CellState* cell) {
     setBackgroundColor(renderer, &bgColor);
@@ -72,23 +80,26 @@ void renderFrame(Renderer* renderer, CellState* cell) {
 
 
 
-bool initialize_game() {
+bool initializeGame() {
     renderer = createRenderer("ZiChess", winsize.width, winsize.height, winIconPath);
     if (renderer == NULL) {
         return false;
     }
 
-    CoreInit();
+    mixer = CoreInit();
+    frozenStar = loadMusic(mixer, frozenStarMusicPath);
+    gymnopedieNo1 = loadMusic(mixer, gymnopediNo1MusicPath);
 
-    fontMont = loadFont(renderer, montserratFontPath, boardLabeFontSize);
+    fontMont14 = loadFont(renderer, montserratFontPath, boardLabeFontSize);
+    fontMont70 = loadFont(renderer, montserratFontPath, menuTitleFontSize);
     fontSans = loadFont(renderer, opensansFontPath, boardLabeFontSize);
 
     SDL_Color* textColor = NULL;
     for (int i = 0; i < 8; ++i) {
         textColor = (i % 2) == 0 ? &tileColor2 : &tileColor1;
-        rankLabelTexture[i] = createText(renderer, rankLabelText[i], textColor, fontMont);
+        rankLabelTexture[i] = createText(renderer, rankLabelText[i], textColor, fontMont14);
         textColor = (i % 2) == 0 ? &tileColor1 : &tileColor2;
-        fileLabelTexture[i] = createText(renderer, fileLabelText[i], textColor, fontMont);
+        fileLabelTexture[i] = createText(renderer, fileLabelText[i], textColor, fontMont14);
     }
    
 
@@ -189,32 +200,58 @@ Scene run_game() {
     return QUIT;
 }
 
+void initMenu() {
+    bgs[0] = loadTexture(renderer, knightBgPath1);
+    bgs[1] = loadTexture(renderer, knightBgPath2);
+    bgs[2] = loadTexture(renderer, knightBgPath3);
+    bgs[3] = loadTexture(renderer, queenBgPath1);
+    bgs[4] = loadTexture(renderer, kingBgPath1);
+
+    mainMenuBgs[0] = bgs[0];
+    optionMenuBgs[0] = bgs[0];     
+    mainMenuBgs[1] = bgs[4];
+    optionMenuBgs[1] = bgs[4];    
+    mainMenuBgs[2] = bgs[1];
+    optionMenuBgs[2] = bgs[2];
+    mainMenuBgs[3] = bgs[3];
+
+}
+
 Scene runMainMenu() {
     bool run = true;
+    int currentMenuBgIndex = randint(0, 3);
+    SDL_Color white = { 255, 255, 255, 255 };
+    SDL_Color black = { 0, 0, 0, 255 };
+    Text* menuTitle = createText(renderer, "ZiChess", &white, fontMont70);
+    hScrollbar* sb = createVScrollbar(renderer, 100, 100, 100, 20, 50, black, white);
     while (run) {
-
-        // event handling
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) run = false;
         }
-
         //update
-        setBackgroundColor(renderer, &bgColor);
-
-        //rendering
+        clearWindow(renderer);
 
 
+        renderTextureEx(renderer, mainMenuBgs[currentMenuBgIndex], 0, 0, 1280, 720);
+        renderText(renderer, menuTitle, 500, 100);
+        drawHScrollbar(renderer, sb);
+        updateMusic(mixer);
         displayWindow(renderer);
     }
-
+    free(sb);
     return QUIT;
 }
 
 void clean()
 {
-    if (fontMont != NULL) TTF_CloseFont(fontMont);
+    if (fontMont14 != NULL) TTF_CloseFont(fontMont14);
+    if (fontMont70 != NULL) TTF_CloseFont(fontMont70);
     if (fontSans != NULL) TTF_CloseFont(fontSans);
+    
     destroyRenderer(renderer);
     destroyCore();
+    cleanSettings();
 }
+
+
 
