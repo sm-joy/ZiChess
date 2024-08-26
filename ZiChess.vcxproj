@@ -180,6 +180,9 @@
     <Image Include="asset\images\icon.ico" />
     <Image Include="asset\images\icon.png" />
   </ItemGroup>
+  <ItemGroup>
+    <Font Include="D:\Downloads\General\Fonts\Montserrat\static\Montserrat-Regular.ttf" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

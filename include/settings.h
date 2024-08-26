@@ -17,7 +17,9 @@ extern char* knightBgPath3;
 extern char* kingBgPath1;
 extern char* queenBgPath1;
 extern char* winIconPath;
-extern char* montserratFontPath;
+
+extern char* montserratBoldFontPath;
+extern char* montserratMediumFontPath;
 extern char* opensansFontPath;
 
 extern SDL_Color tileColor1;

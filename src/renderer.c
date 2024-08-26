@@ -164,7 +164,27 @@ void renderRect(Renderer* renderer, SDL_Rect* pRect, SDL_Color* pColor, bool pFi
     }
 }
 
-void renderTextureEx(Renderer* renderer, SDL_Texture* pTexture, int pPosX, int pPosY, int pTextureWidth, int pTextureHeight) {
+void renderTextureEx(Renderer* renderer, SDL_Texture* pTexture, int pPosX, int pPosY, int pTextureWidth, int pTextureHeight) { //, int scale, bool saveAspectRatio) {
+    int scale = 1;
+    bool saveAspectRatio = true;
+    if (scale <= 0) {
+        fprintf(stderr, "Invalid scale factor: %d. Scale must be greater than 0.\n", scale);
+        return;
+    }
+    if (scale != 1) {
+        int scaledWidth = pTextureWidth * scale;
+        int scaledHeight = pTextureHeight * scale;
+
+        if (saveAspectRatio) {
+            float aspectRatio = (float)pTextureWidth / (float)pTextureHeight;
+            if (scaledWidth > scaledHeight * aspectRatio) {
+                pTextureWidth = scaledHeight * aspectRatio;
+            }
+            else {
+                pTextureHeight = scaledWidth / aspectRatio;
+            }
+        }
+    }
     SDL_Rect destinationRect = { pPosX, pPosY, pTextureWidth, pTextureHeight };
     if (SDL_RenderCopy(renderer->renderer, pTexture, NULL, &destinationRect) != 0) {
         fprintf(stderr, "Error rendering texture! Error: %s", SDL_GetError());
@@ -174,14 +194,14 @@ void renderTextureEx(Renderer* renderer, SDL_Texture* pTexture, int pPosX, int p
 void renderTexture(Renderer* renderer, SDL_Texture* texture, int posX, int posY) {
     int height = 0, width = 0;
     SDL_QueryTexture(texture, NULL, NULL, &width, &height);
-    renderTextureEx(renderer, texture, posX, posY, width, height);
+    renderTextureEx(renderer, texture, posX, posY, width, height, 1, false);
 }
 
-void renderText(Renderer* renderer, Text* text, int posX, int posY) {
+void renderText(Renderer* renderer, Text* text, int posX, int posY) { //, int scale, bool saveAspectRatio) {
     if (text == NULL) {
         return;
     }
-    renderTextureEx(renderer, text->texture, posX, posY, text->width, text->height);
+    renderTextureEx(renderer, text->texture, posX, posY, text->width, text->height); // , scale, saveAspectRatio);
 }
 
 void renderTextCenterRect(Renderer* renderer, const char* pText, SDL_Color* pColor, SDL_Rect* pRect, TTF_Font* font) {
@@ -201,7 +221,7 @@ void renderTextCenterRect(Renderer* renderer, const char* pText, SDL_Color* pCol
     int x = pRect->x + (pRect->w - textSurface->w) / 2;
     int y = pRect->y + (pRect->h - textSurface->h) / 2;
 
-    renderTextureEx(renderer, textTexture, x, y, textSurface->w, textSurface->h);
+    renderTextureEx(renderer, textTexture, x, y, textSurface->w, textSurface->h, 1, false);
 
     SDL_FreeSurface(textSurface);
     SDL_DestroyTexture(textTexture);
@@ -309,7 +329,7 @@ static bool addButton(Renderer* renderer, Button* button) {
 
 Button* createButton(
     Renderer* renderer, 
-    const char* text, 
+    char text, 
     SDL_Color* buttonColor, 
     SDL_Color* textColor, 
     TTF_Font* font, 
@@ -329,7 +349,7 @@ Button* createButton(
         return NULL;
     }
 
-    button->text = textobj;
+    button->currentText = textobj;
     button->rect.x = x;
     button->rect.y = y;
     if (width == 0 && height == 0) {
@@ -337,11 +357,11 @@ Button* createButton(
         button->rect.h = textobj->height;
     }
     button->color = *buttonColor;
-    button->isHovered = false;
-    button->isPressed = false;
+    button->state = BUTTON_NORMAL;
 
     button->hoverText = NULL;
     button->pressText = NULL;
+    button->normalText = NULL;
 
     if (!addButton(renderer, button)) {
         destroyButton(button);
@@ -357,7 +377,8 @@ Button* createButtonTx(Renderer* renderer, SDL_Texture* texture)
 }
 
 Button* createButtonEx(
-    Renderer* renderer, 
+    Renderer* renderer,
+    char id,
     int x, 
     int y, 
     int width, 
@@ -371,18 +392,25 @@ Button* createButtonEx(
         fprintf(stderr, "Failed to allocate memory for button\n");
         return NULL;
     }
-    button->text = normalText;
+    button->id = id;
+    button->currentText = normalText;
+    button->normalText = normalText;
     button->rect.x = x;
     button->rect.y = y;
     if (height == 0 && width == 0) {
         button->rect.w = normalText->width;
         button->rect.h = normalText->height;
     }
-    button->color = *buttonColor;
+    if (buttonColor != NULL) {
+        button->color = *buttonColor;
+    }
+    else {
+        button->color = (SDL_Color){ 0, 0, 0, 0 };
+    }
+
     button->hoverText = hoverText;
     button->pressText = pressText;
-    button->isHovered = false;
-    button->isPressed = false;
+    button->state = BUTTON_NORMAL;
 
     if (!addButton(renderer, button)) {
         destroyButton(button);
@@ -392,16 +420,25 @@ Button* createButtonEx(
     return button;
 }
 
+void renderButton(Renderer* renderer, Button* button) {
+    if (button->color.a == 0) {
+        renderTextureEa(renderer, button->currentText->texture, NULL, &button->rect);
+    }
+    else {
+        renderRect(renderer, &button->rect, &button->color, true);
+        renderText(renderer, button->currentText, button->rect.x, button->rect.y);
+    }
+}
+
+
+
 void destroyButton(Button* button) {
-    if (button->text != NULL) destroyText(button->text);
-    if (button->hoverText != NULL) destroyText(button->hoverText);
-    if (button->pressText != NULL) destroyText(button->pressText);
     free(button);
     button = NULL;
 }
 
 void destroyButtons(Renderer* renderer) {
-    if (renderer->createdButtons) {
+    if (renderer->createdButtons != NULL) {
         for (int i = 0; i < renderer->numButtons; ++i) {
             destroyButton(renderer->createdButtons[i]);
         }

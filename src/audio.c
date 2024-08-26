@@ -105,6 +105,8 @@ void playMusic(Mixer* audioSystem, Mix_Music* music,  bool fade){
 }
 
 void destroyMixer(Mixer* audioSystem) {
+    if (audioSystem->musicPlaying) Mix_HaltMusic();
+
     for (int i = 0; i < audioSystem->soundCount; ++i) {
         if(audioSystem->sounds[i] != NULL) Mix_FreeChunk(audioSystem->sounds[i]);
     }

@@ -7,10 +7,12 @@
 #include "../include/Renderer.h"
 #include "../include/game.h"
 
+#include <crtdbg.h>
+
 
 
 int main(int argc, char* argv[]) {    
-
+    //_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
     Scene currentScene = MAIN_MENU;
     initSettings();
     initializeGame();

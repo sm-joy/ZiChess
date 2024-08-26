@@ -73,4 +73,7 @@
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
+  <ItemGroup>
+    <Font Include="D:\Downloads\General\Fonts\Montserrat\static\Montserrat-Regular.ttf" />
+  </ItemGroup>
 </Project>

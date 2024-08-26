@@ -114,8 +114,9 @@ char* getAbsolutePath(const char* relativePath) {
     }
 
     strcpy_s(fullPath, size, basePath);
-    SDL_free(basePath);
     strcat_s(fullPath, size, relativePath);
+    SDL_free(basePath);
+
     return fullPath;
 }
 

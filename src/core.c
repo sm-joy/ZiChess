@@ -190,6 +190,95 @@ void destroyMoves(CellState* cell, Move** moves, int moveCount) {
     }
 }
 
+static bool isHover(Button* button)
+{
+    SDL_Point mousePos = {0, 0};
+    SDL_GetMouseState(&mousePos.x, &mousePos.y);
+    return SDL_PointInRect(&mousePos, &button->rect);
+}
+
+static bool isPressed(Button* button, SDL_Event* event) {
+    return event->type == SDL_MOUSEBUTTONDOWN && event->button.button == SDL_BUTTON_LEFT && isHover(button);
+}
+
+static bool isReleased(Button* button, SDL_Event* event) {
+    return event->type == SDL_MOUSEBUTTONUP && event->button.button == SDL_BUTTON_LEFT && button->state == BUTTON_PRESSED;
+}
+
+static Scene updateButtons(Renderer* renderer) {
+    for (int i = 0; i < renderer->numButtons; ++i) {
+        Button* button = renderer->createdButtons[i];
+        switch (button->state) {
+        case BUTTON_RELEASED: {
+            switch (button->id) {
+            case 'N': {
+                return MAIN_GAME;
+                break;
+            }
+            case 'O': {
+                return OPTIONS;
+                break;
+            }
+            case 'Q': {
+                return QUIT;
+                break;
+            }
+            default: {
+                return MAIN_MENU;
+                break;
+            }
+            }
+            break;
+        }
+        case BUTTON_HOVER: {
+            button->currentText = button->hoverText;
+            break;
+        }
+        case BUTTON_PRESSED: {
+            button->currentText = button->pressText;
+            break;
+        }
+        case BUTTON_NORMAL: {
+            button->currentText = button->normalText;
+        }
+        default: {
+            button->currentText = button->normalText;
+            break;
+        }
+        }
+    }
+
+    return MAIN_MENU;
+}
+
+
+Scene handleButtonEvent(Renderer* renderer, SDL_Event* event) {
+    if (renderer->createdButtons != NULL) {
+        for (int i = 0; i < renderer->numButtons; ++i) {
+            Button* button = renderer->createdButtons[i];
+
+
+            if (button->state != BUTTON_PRESSED) {
+                if (isHover(button)) {
+                    button->state = BUTTON_HOVER;
+                }
+                else {
+                    button->state = BUTTON_NORMAL;
+                }
+            }
+
+            if (isPressed(button, event)) {
+                button->state = BUTTON_PRESSED;
+            }
+            else if (isReleased(button, event)) {
+                button->state = BUTTON_RELEASED;
+            }
+        }
+    }
+    return updateButtons(renderer);
+}
+
+
 static bool addMove(CellState* cell, Move** moves, int* moveCount, int startingIndex, int targetIndex) {
     if (targetIndex < 0 || targetIndex >= 64) return false;
     Move* newMove = createMove(startingIndex, targetIndex);

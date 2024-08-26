@@ -78,5 +78,6 @@ bool markSelected(CellState* cell, int row, int col);
 void movePiece(CellState* cell, int fromRow, int fromCol, int toRow, int toCol);
 MovesArray* generateMoves(CellState* cell, int row, int col);
 void destroyMoves(CellState* cell, Move** moves, int moveCount);
+Scene handleButtonEvent(Renderer* renderer, SDL_Event* event);
 
 #endif // CORE_H

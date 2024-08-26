@@ -8,10 +8,14 @@ SDL_Color bgColor = { 55, 61, 99, 255 };
 
 //for game
 int boardLabeFontSize= 14;
-int menuTitleFontSize = 70;
-TTF_Font* fontMont14 = NULL;
-TTF_Font* fontMont70 = NULL;
+int menuTitleFontSize = 100;
+int buttonFontSize = 60;
+
+TTF_Font* menuTitleBoldFontMont = NULL;
+TTF_Font* menuTitleFontSans = NULL;
 TTF_Font* fontSans = NULL;
+TTF_Font* buttonMediumFontMont = NULL;
+
 Text* rankLabelTexture[8] = { NULL };
 Text* fileLabelTexture[8] = { NULL };
 static const char* rankLabelText[8] = { "8", "7", "6", "5", "4", "3", "2", "1" };
@@ -30,6 +34,12 @@ SDL_Texture* optionMenuBgs[3] = {NULL};
 static Mixer* mixer = NULL;
 Mix_Music* frozenStar = NULL;
 Mix_Music* gymnopedieNo1 = NULL;
+
+int menuTitleX = 0;
+int menuTitleY = 0;
+
+
+Button* newGameButton = NULL;
 
 void renderFrame(Renderer* renderer, CellState* cell) {
     setBackgroundColor(renderer, &bgColor);
@@ -89,17 +99,18 @@ bool initializeGame() {
     mixer = CoreInit();
     frozenStar = loadMusic(mixer, frozenStarMusicPath);
     gymnopedieNo1 = loadMusic(mixer, gymnopediNo1MusicPath);
-
-    fontMont14 = loadFont(renderer, montserratFontPath, boardLabeFontSize);
-    fontMont70 = loadFont(renderer, montserratFontPath, menuTitleFontSize);
+  
+    menuTitleBoldFontMont = loadFont(renderer, montserratBoldFontPath, menuTitleFontSize);
+    buttonMediumFontMont = loadFont(renderer, montserratMediumFontPath, buttonFontSize);
+    menuTitleFontSans = loadFont(renderer, opensansFontPath, menuTitleFontSize);
     fontSans = loadFont(renderer, opensansFontPath, boardLabeFontSize);
 
     SDL_Color* textColor = NULL;
     for (int i = 0; i < 8; ++i) {
         textColor = (i % 2) == 0 ? &tileColor2 : &tileColor1;
-        rankLabelTexture[i] = createText(renderer, rankLabelText[i], textColor, fontMont14);
+        rankLabelTexture[i] = createText(renderer, rankLabelText[i], textColor, fontSans);
         textColor = (i % 2) == 0 ? &tileColor1 : &tileColor2;
-        fileLabelTexture[i] = createText(renderer, fileLabelText[i], textColor, fontMont14);
+        fileLabelTexture[i] = createText(renderer, fileLabelText[i], textColor, fontSans);
     }
    
 
@@ -218,34 +229,76 @@ void initMenu() {
 }
 
 Scene runMainMenu() {
-    bool run = true;
     int currentMenuBgIndex = randint(0, 3);
     SDL_Color white = { 255, 255, 255, 255 };
     SDL_Color black = { 0, 0, 0, 255 };
-    Text* menuTitle = createText(renderer, "ZiChess", &white, fontMont70);
-    hScrollbar* sb = createVScrollbar(renderer, 100, 100, 100, 20, 50, black, white);
-    while (run) {
+    SDL_Color lightGray = { 224, 224, 224, 255 };
+    SDL_Color gray = { 176, 176, 176, 255 };
+
+    Text* menuTitle = createText(renderer, "ZiChess", &white, menuTitleBoldFontMont);
+    menuTitleX = (winsize.width / 2) - (menuTitle->width/2);
+    menuTitleY = 100;
+
+    int button_padY = 10;
+    int button_padX = 100;
+
+    Text* newGameButtonNormalText = createText(renderer, "New Game", &lightGray, buttonMediumFontMont);
+    Text* newGameButtonHoverText = createText(renderer, "New Game", &gray, buttonMediumFontMont);
+    Text* newGameButtonPressText = createText(renderer, "New Game", &white, buttonMediumFontMont);
+    Button* newGameButton = createButtonEx(renderer, 'N', button_padX, 300, 0, 0, newGameButtonNormalText, newGameButtonHoverText, newGameButtonPressText, NULL);
+
+    Text* optionsButtonNormalText = createText(renderer, "Options", &lightGray, buttonMediumFontMont);
+    Text* optionsButtonHoverText = createText(renderer, "Options", &gray, buttonMediumFontMont);
+    Text* optionsButtonPressText = createText(renderer, "Options", &white, buttonMediumFontMont);
+    Button* optionsButton = createButtonEx(renderer, 'O', button_padX, (newGameButton->rect.h + newGameButton->rect.y + button_padY), 0, 0, optionsButtonNormalText, optionsButtonHoverText, optionsButtonPressText, NULL);
+
+
+    Text* quitButtonNormalText = createText(renderer, "Quit", &lightGray, buttonMediumFontMont);
+    Text* quitButtonHoverText = createText(renderer, "Quit", &gray, buttonMediumFontMont);
+    Text* quitButtonPressText = createText(renderer, "Quit", &white, buttonMediumFontMont);
+    Button* quitButton = createButtonEx(renderer, 'Q', button_padX, (optionsButton->rect.h + optionsButton->rect.y + button_padY), 0, 0, quitButtonNormalText, quitButtonHoverText, quitButtonPressText, NULL);
+
+
+    while (true) {
         while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT) run = false;
+            if (event.type == SDL_QUIT) return QUIT;
+
+            switch (handleButtonEvent(renderer, &event)) {
+            case QUIT: {
+                return QUIT;
+                break;
+            }
+            case MAIN_GAME: {
+                return MAIN_GAME;
+                break;
+            }
+            case MAIN_MENU: {
+                break;
+            }
+            default: {
+                break;
+            }
+            }
+
         }
+
         //update
         clearWindow(renderer);
-
-
         renderTextureEx(renderer, mainMenuBgs[currentMenuBgIndex], 0, 0, 1280, 720);
-        renderText(renderer, menuTitle, 500, 100);
-        drawHScrollbar(renderer, sb);
+        renderText(renderer, menuTitle, menuTitleX, menuTitleY);
+        renderButton(renderer, newGameButton);
+        renderButton(renderer, optionsButton);
+        renderButton(renderer, quitButton);
         updateMusic(mixer);
         displayWindow(renderer);
     }
-    free(sb);
-    return QUIT;
 }
 
 void clean()
 {
-    if (fontMont14 != NULL) TTF_CloseFont(fontMont14);
-    if (fontMont70 != NULL) TTF_CloseFont(fontMont70);
+    if (menuTitleBoldFontMont != NULL) TTF_CloseFont(menuTitleBoldFontMont);
+    if (menuTitleFontSans != NULL) TTF_CloseFont(menuTitleFontSans);
+    if (buttonMediumFontMont != NULL) TTF_CloseFont(buttonMediumFontMont);
     if (fontSans != NULL) TTF_CloseFont(fontSans);
     
     destroyRenderer(renderer);
