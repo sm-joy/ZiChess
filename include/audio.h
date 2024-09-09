@@ -5,7 +5,7 @@
 #include <SDL_mixer.h>
 #include <stdio.h>
 
-#include "utils.h"
+#include "Utils.h"
 
 #define MUSIC_WAIT_TIME 3000 //3 seconds
 #define MUSIC_FADE_TIME 3000 //3 seconds
@@ -30,5 +30,6 @@ void destroyMixer(Mixer* audioSystem);
 void setVolume(int percent);
 void playRandomMusic(Mixer* audioSystem);
 void updateMusic(Mixer* audioSystem);
+void stopMusic(Mixer* aduioSystem);
 
 #endif // AUDIO_H

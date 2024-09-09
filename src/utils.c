@@ -1,4 +1,4 @@
-#include "../include/utils.h"
+#include "../include/Utils.h"
 
 int randint(int min, int max) {
     if (min > max) {
@@ -17,40 +17,40 @@ int randint(int min, int max) {
 
 
 
-bool addTexture(Renderer* renderer, SDL_Texture* texture) {
+bool addTexture(RenderContext* rc, SDL_Texture* texture) {
     if (texture == NULL) {
         return false;
     }
 
-    SDL_Texture** newptr = (SDL_Texture**)realloc(renderer->loadedTextures, (renderer->numTextures + 1) * sizeof(SDL_Texture*));
+    SDL_Texture** newptr = (SDL_Texture**)realloc(rc->loadedTextures, (rc->numTextures + 1) * sizeof(SDL_Texture*));
     if (newptr == NULL) {
         fprintf(stderr, "Error Loading Texture! Realloc Failed Error: %s\n", SDL_GetError());
         return false;
     }
 
-    renderer->loadedTextures = newptr;
-    renderer->loadedTextures[renderer->numTextures++] = texture;
+    rc->loadedTextures = newptr;
+    rc->loadedTextures[rc->numTextures++] = texture;
     return true;
 }
 
 
 
 
-SDL_Texture* loadTexture(Renderer* renderer, const char* pFilePath) {
+SDL_Texture* loadTexture(RenderContext* rc, const char* pFilePath) {
     if (pFilePath == NULL) {
         fprintf(stderr, "Error! Texture file path is null!\n");
         return NULL;
     }
 
-    SDL_Texture* texture = IMG_LoadTexture(renderer->renderer, pFilePath);
-    if (!addTexture(renderer, texture)) {
+    SDL_Texture* texture = IMG_LoadTexture(rc->renderer, pFilePath);
+    if (!addTexture(rc, texture)) {
         fprintf(stderr, "Error Loading '%s' Texture! Error: %s\n", pFilePath, SDL_GetError());
     }
     return texture;
 }
 
 
-SDL_Texture* createboardTexture(Renderer* renderer) {
+SDL_Texture* createboardTexture(RenderContext* rc) {
     int squareSize = 74;
     int boardSize = squareSize * 8;
 
@@ -79,14 +79,14 @@ SDL_Texture* createboardTexture(Renderer* renderer) {
         }
     }
 
-    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer->renderer, surface);
+    SDL_Texture* texture = SDL_CreateTextureFromSurface(rc->renderer, surface);
     SDL_FreeSurface(surface);
 
     if (texture == NULL) {
         fprintf(stderr, "Failed to create texture: %s\n", SDL_GetError());
     }
     else {
-        addTexture(renderer, texture); // for autometic free
+        addTexture(rc, texture); // for autometic free
     }
 
     return texture;
@@ -119,6 +119,35 @@ char* getAbsolutePath(const char* relativePath) {
 
     return fullPath;
 }
+
+void FPSCounter_Init(FPSCounter* fpsCounter) {
+    fpsCounter->FpsStartTime = fpsCounter->TimerStartTime = SDL_GetTicks();
+    fpsCounter->frameCount = 0;
+    fpsCounter->fps = 0.0f;
+}
+
+void FPSCounter_Update(FPSCounter* fpsCounter) {
+    fpsCounter->frameCount++;
+    Uint32 currentTime = SDL_GetTicks();
+    Uint32 TimerStartTime = currentTime - fpsCounter->FpsStartTime;
+
+    if (TimerStartTime >= 1000) {
+        fpsCounter->fps = (float)fpsCounter->frameCount * 1000.0f / TimerStartTime;
+        fpsCounter->frameCount = 0;
+        fpsCounter->FpsStartTime = currentTime;
+    }
+}
+
+bool FPSCounter_SecondsPassed(FPSCounter* fpsCounter, int seconds) {
+    Uint32 currentTime = SDL_GetTicks();
+    Uint32 TimerStartTime = currentTime - fpsCounter->TimerStartTime;
+    if (TimerStartTime >= (seconds * 1000)) {
+        fpsCounter->TimerStartTime = currentTime;
+        return true;
+    }
+    return false;
+}
+
 
 
 

@@ -8,10 +8,11 @@
 #include <SDL_image.h>
 #include <SDL_ttf.h>
 
-#include "settings.h"
-#include "renderer.h"
-#include "utils.h"
-#include "audio.h"
+#include "Settings.h"
+#include "Graphics.h"
+#include "Utils.h"
+#include "Audio.h"
+#include "Ui.h"
 
 #define index(row, col) row * 8 + col
 
@@ -19,9 +20,16 @@ typedef struct POSITION{
 	unsigned int x, y;
 } Pos;
 
+typedef struct {
+	unsigned  int min, sec;
+	Label* activeText;
+	Label* inactiveText;
+	bool isActive;
+} Timer_t;
+
 
 typedef enum CHESS_PIECE_Type {
-	NONE,
+	NONE_TYPE,
 	KING,
 	QUEEN,
 	PAWN,
@@ -72,12 +80,17 @@ typedef enum SCENE_STATE {
 Mixer* CoreInit();
 void destroyCore();
 
+void DestroyTimer(Timer_t* timer);
+Timer_t* CreateTimer(RenderContext* rc, int min, int sec, int posX, int posY, SDL_Color* activeTextColor, SDL_Color* inactiveTextColor, TTF_Font* font);
+void TimerDecreement(RenderContext* rc, Timer_t* timer);
+
 void loadPositionFromFen(const char* fen, CellState* board);
 bool getCellPressed(int* row, int* col);
 bool markSelected(CellState* cell, int row, int col);
 void movePiece(CellState* cell, int fromRow, int fromCol, int toRow, int toCol);
 MovesArray* generateMoves(CellState* cell, int row, int col);
 void destroyMoves(CellState* cell, Move** moves, int moveCount);
-Scene handleButtonEvent(Renderer* renderer, SDL_Event* event);
+void handleButtonEvent(WidgetManager* wm, SDL_Event* event);
+Scene updateButtons(WidgetManager* wm);
 
 #endif // CORE_H

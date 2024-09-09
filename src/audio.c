@@ -1,4 +1,4 @@
-#include "../include/audio.h"
+#include "../include/Audio.h"
 
 static Uint32 lastMusicEndTime = 0;
 
@@ -30,13 +30,12 @@ static void addMusic(Mixer* audioSystem, Mix_Music* music) {
 
 
 Mixer* createMixer() {
-    Mixer* audioSystem = NULL;
     if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) == -1) {
         fprintf(stderr, "Mix_OpenAudio Error: %s\n", Mix_GetError());
         return NULL;
     }
 
-    audioSystem = (Mixer*)malloc(sizeof(Mixer));
+    Mixer* audioSystem = (Mixer*)malloc(sizeof(Mixer));
     if (audioSystem == NULL) {
         fprintf(stderr, "Malloc Error: Unable to allocate AudioSystem! Error: %s\n", Mix_GetError());
         return NULL;
@@ -156,6 +155,13 @@ void updateMusic(Mixer* audioSystem) {
 
     if (!audioSystem->musicPlaying && (currentTime - lastMusicEndTime) >= MUSIC_WAIT_TIME) {
         playRandomMusic(audioSystem);
+    }
+}
+
+void stopMusic(Mixer* audioSystem) {
+    if (audioSystem->musicPlaying && Mix_PlayingMusic()) {
+        Mix_HaltMusic();
+        audioSystem->musicPlaying = false;
     }
 }
 

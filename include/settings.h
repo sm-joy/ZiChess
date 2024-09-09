@@ -2,11 +2,21 @@
 #define SETTINGS_H
 
 #include <SDL.h>
-#include "utils.h"
+#include "Utils.h" 
+
+#define MAX_KEY_LENGTH 128
+#define MAX_VALUE_LENGTH 128
 
 typedef struct WINDOW_DIMENSION {
 	short int width, height;
 } windowSize;
+
+typedef struct {
+	bool soundOn;
+	int volume;
+} Settings;
+
+extern Settings settings;
 
 extern windowSize winsize;
 extern int squareSize;
@@ -38,7 +48,10 @@ extern char* promoteSoundPath;
 extern char* frozenStarMusicPath;
 extern char* gymnopediNo1MusicPath;
 
+
 void initSettings();
 void cleanSettings();
+void loadSettings(Settings* settings, const char* filePath);
+void saveSettings(Settings* settings, const char* filePath);
 
 #endif // SETTINGS_H

@@ -12,12 +12,62 @@ Piece nw = { WHITE, KNIGHT, {999, 0, 333, 334} };
 Piece nb = { BLACK, KNIGHT, {999, 334, 333, 334} };
 Piece rw = { WHITE, ROOK, {1332, 0, 333, 334} };
 Piece rb = { BLACK, ROOK, {1332, 334, 333, 334} };
-Piece none = { NOCOLOR, NONE, {0, 0, 0, 0} };
+Piece none = { NOCOLOR, NONE_TYPE, {0, 0, 0, 0} };
 
 Mixer* mixer = NULL;
 Mix_Chunk* moveSelfSound = NULL;
 Mix_Chunk* captureSound = NULL;
 Mix_Chunk* promoteSound = NULL;
+
+
+void DestroyTimer(Timer_t* timer) {
+    if (timer->activeText) UI_DestroyLabel(timer->activeText);
+    if (timer->inactiveText) UI_DestroyLabel(timer->inactiveText);
+    free(timer);
+    timer = NULL;
+}
+
+Timer_t* CreateTimer(RenderContext* rc, int min, int sec, int posX, int posY, SDL_Color* activeTextColor, SDL_Color* inactiveTextColor, TTF_Font* font) {
+    Timer_t* timer = (Timer_t*)malloc(sizeof(Timer_t));
+    if (!timer) {
+        fprintf(stderr, "Malloc Failed While Creating Timer_t structure!\n");
+        return NULL;
+    }
+
+    timer->min = min;
+    timer->sec = sec;
+    timer->isActive = true;
+    char str[6];
+    sprintf_s(str, 6, "%02d:%02d", min, sec);
+    timer->activeText = UI_CreateLabel(rc, NULL, str, posX, posY, activeTextColor, font);
+    if (!timer->activeText) {
+        DestroyTimer(timer);
+        return NULL;
+    }    
+    
+    timer->inactiveText = UI_CreateLabel(rc, NULL, str, posX, posY, inactiveTextColor, font);
+    if (!timer->inactiveText) {
+        DestroyTimer(timer);
+        return NULL;
+    }
+    return timer;
+}
+
+void TimerDecreement(RenderContext* rc, Timer_t* timer) {
+    if (timer->sec > 0) {
+        timer->sec--;
+    }
+    else {
+        timer->sec = 59;
+        if (timer->min > 0) {
+            timer->min--;
+        }
+    }
+    char str[6];
+    sprintf_s(str, 6, "%02d:%02d", timer->min, timer->sec);
+    UI_UpdateLabel(rc, timer->activeText, str, NONE, NONE);
+    UI_UpdateLabel(rc, timer->inactiveText, str, NONE, NONE);
+}
 
 Mixer* CoreInit() {
     mixer = createMixer();
@@ -101,22 +151,40 @@ void loadPositionFromFen(const char* fen, CellState *board) {
     }
 }
 
+//bool getCellPressed(int* row, int* col) {
+//    int mouseX, mouseY;
+//    SDL_GetMouseState(&mouseX, &mouseY);
+//    (*row) = (int)(mouseY / squareSize);
+//    (*col) = (int)(mouseX / squareSize);
+//    if (0 <= (*row) && (*row) < 8 && 0 <= (*col) && (*col) < 8) {
+//        return true;
+//    }
+//    else {
+//        return false;
+//    }
+//}
+
 bool getCellPressed(int* row, int* col) {
     int mouseX, mouseY;
     SDL_GetMouseState(&mouseX, &mouseY);
-    (*row) = (int)(mouseY / squareSize);
-    (*col) = (int)(mouseX / squareSize);
-    if (0 <= (*row) && (*row) < 8 && 0 <= (*col) && (*col) < 8) {
+
+    int boardStartX = (winsize.width - (8 * squareSize)) / 2;
+    int boardStartY = (winsize.height - (8 * squareSize)) / 2;
+
+    int relX = mouseX - boardStartX;
+    int relY = mouseY - boardStartY;
+    if (relX >= 0 && relX < 8 * squareSize && relY >= 0 && relY < 8 * squareSize) {
+        *col = relX / squareSize;
+        *row = relY / squareSize;
         return true;
     }
-    else {
-        return false;
-    }
+    return false;
 }
+
 
 bool markSelected(CellState* cell, int row, int col) {
     int index = 8 * row + col;
-    if (cell[index].piece.type != NONE) {
+    if (cell[index].piece.type != NONE_TYPE) {
         cell[index].isSelected = true;
         return true;
     }
@@ -139,7 +207,7 @@ void movePiece(CellState* cell, int fromRow, int fromCol, int toRow, int toCol) 
     if (fromIndex == toIndex || cell[fromIndex].piece.color == cell[toIndex].piece.color) {
         return;
     }
-    else if (cell[toIndex].piece.type == NONE) {
+    else if (cell[toIndex].piece.type == NONE_TYPE) {
         playSound(moveSelfSound);
     }
     else if (fromIndex == toIndex || cell[fromIndex].piece.color != cell[toIndex].piece.color) {
@@ -157,7 +225,7 @@ void movePiece(CellState* cell, int fromRow, int fromCol, int toRow, int toCol) 
     else {
         cell[toIndex].piece = cell[fromIndex].piece;
     }
-    cell[fromIndex].piece.type = NONE;
+    cell[fromIndex].piece.type = NONE_TYPE;
     cell[fromIndex].piece.color = NOCOLOR;
     cell[fromIndex].piece.srcRect = (SDL_Rect){ 0, 0, 0, 0 };
     //printf("Moving piece from [%d, %d] (index %d) to [%d, %d] (index %d)\n", fromRow, fromCol, fromIndex, toRow, toCol, toIndex);
@@ -202,61 +270,61 @@ static bool isPressed(Button* button, SDL_Event* event) {
 }
 
 static bool isReleased(Button* button, SDL_Event* event) {
-    return event->type == SDL_MOUSEBUTTONUP && event->button.button == SDL_BUTTON_LEFT && button->state == BUTTON_PRESSED;
+    return event->type == SDL_MOUSEBUTTONUP && button->state == BUTTON_PRESSED;
 }
 
-static Scene updateButtons(Renderer* renderer) {
-    for (int i = 0; i < renderer->numButtons; ++i) {
-        Button* button = renderer->createdButtons[i];
+Scene updateButtons(WidgetManager* wm) {
+    Scene nextScene = MAIN_MENU;
+    for (int i = 0; i < wm->numButtons; ++i) {
+        Button* button = wm->buttons[i];
         switch (button->state) {
         case BUTTON_RELEASED: {
             switch (button->id) {
             case 'N': {
-                return MAIN_GAME;
+                nextScene =  MAIN_GAME;
                 break;
             }
             case 'O': {
-                return OPTIONS;
+                nextScene =  OPTIONS;
                 break;
             }
             case 'Q': {
-                return QUIT;
+                nextScene =  QUIT;
                 break;
             }
             default: {
-                return MAIN_MENU;
+                nextScene = MAIN_MENU;
                 break;
             }
             }
             break;
         }
         case BUTTON_HOVER: {
-            button->currentText = button->hoverText;
+            button->currentLabel = button->hoverLabel;
             break;
         }
         case BUTTON_PRESSED: {
-            button->currentText = button->pressText;
+            button->currentLabel = button->pressLabel;
             break;
         }
         case BUTTON_NORMAL: {
-            button->currentText = button->normalText;
+            button->currentLabel = button->normalLabel;
         }
         default: {
-            button->currentText = button->normalText;
+            button->currentLabel = button->normalLabel;
             break;
         }
         }
     }
 
-    return MAIN_MENU;
+    return nextScene;
 }
 
 
-Scene handleButtonEvent(Renderer* renderer, SDL_Event* event) {
-    if (renderer->createdButtons != NULL) {
-        for (int i = 0; i < renderer->numButtons; ++i) {
-            Button* button = renderer->createdButtons[i];
-
+void handleButtonEvent(WidgetManager* wm, SDL_Event* event) {
+    if (wm->buttons != NULL) {
+        for (int i = 0; i < wm->numButtons; ++i) {
+            Button* button = wm->buttons[i];
 
             if (button->state != BUTTON_PRESSED) {
                 if (isHover(button)) {
@@ -275,7 +343,6 @@ Scene handleButtonEvent(Renderer* renderer, SDL_Event* event) {
             }
         }
     }
-    return updateButtons(renderer);
 }
 
 
@@ -337,20 +404,20 @@ static MovesArray* generatePawnMoves(CellState* cell, int row, int col) {
     int moveCount = 0;
 
     int targetIndex = startingIndex + forwardDir;
-    if (cell[targetIndex].piece.type == NONE) {
+    if (cell[targetIndex].piece.type == NONE_TYPE) {
 
         addMove(cell, moves, &moveCount, startingIndex, targetIndex);
 
         targetIndex += forwardDir;
         if (maxMoves == 4) {
-            if (cell[targetIndex].piece.type == NONE) {
+            if (cell[targetIndex].piece.type == NONE_TYPE) {
                 addMove(cell, moves, &moveCount, startingIndex, targetIndex);
             }
         }
     }    
     if (col > 0) {
         targetIndex = startingIndex + topLeftDir;
-        if (targetIndex >= 0 && targetIndex < 64 && cell[targetIndex].piece.type != NONE) {
+        if (targetIndex >= 0 && targetIndex < 64 && cell[targetIndex].piece.type != NONE_TYPE) {
             if (cell[targetIndex].piece.color != cell[startingIndex].piece.color) {
                 addMove(cell, moves, &moveCount, startingIndex, targetIndex);
             }
@@ -358,7 +425,7 @@ static MovesArray* generatePawnMoves(CellState* cell, int row, int col) {
 
         // el passant (ill work on it later)
         targetIndex = startingIndex + leftDir;
-        if (targetIndex >= 0 && targetIndex < 64 && cell[targetIndex].piece.type != NONE) {
+        if (targetIndex >= 0 && targetIndex < 64 && cell[targetIndex].piece.type != NONE_TYPE) {
             if (cell[targetIndex].piece.color != cell[startingIndex].piece.color) {
 
             }
@@ -367,7 +434,7 @@ static MovesArray* generatePawnMoves(CellState* cell, int row, int col) {
 
     if (col < 7) {
         targetIndex = startingIndex + topRightDir;
-        if (cell[targetIndex].piece.color != cell[startingIndex].piece.color && cell[targetIndex].piece.type != NONE) {
+        if (cell[targetIndex].piece.color != cell[startingIndex].piece.color && cell[targetIndex].piece.type != NONE_TYPE) {
             addMove(cell, moves, &moveCount, startingIndex, targetIndex);
         }
     }
@@ -406,7 +473,7 @@ static MovesArray* generateKingMoves(CellState* cell, int row, int col) {
         if (newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8) {
             int targetIndex = newRow * 8 + newCol;
 
-            if (cell[targetIndex].piece.type == NONE || cell[targetIndex].piece.color != color) {
+            if (cell[targetIndex].piece.type == NONE_TYPE || cell[targetIndex].piece.color != color) {
                 addMove(cell, moves, &moveCount, startingIndex, targetIndex);
             }
         }
@@ -446,7 +513,7 @@ static MovesArray* generateQueenMoves(CellState* cell, int row, int col) {
         // Horizontal Right
         int targetIndex = row * 8 + (col + i);
         if (hRight && col + i < 8) {
-            if (cell[targetIndex].piece.type == NONE) {
+            if (cell[targetIndex].piece.type == NONE_TYPE) {
                 addMove(cell, moves, &moveCount, startingIndex, targetIndex);
             }
             else if (cell[targetIndex].piece.color == currentPieceColor) {
@@ -462,7 +529,7 @@ static MovesArray* generateQueenMoves(CellState* cell, int row, int col) {
         // Horizontal Left
         targetIndex = row * 8 + (col - i);
         if (hLeft && col - i >= 0) {
-            if (cell[targetIndex].piece.type == NONE) {
+            if (cell[targetIndex].piece.type == NONE_TYPE) {
                 addMove(cell, moves, &moveCount, startingIndex, targetIndex);
             }
             else if (cell[targetIndex].piece.color == currentPieceColor) {
@@ -478,7 +545,7 @@ static MovesArray* generateQueenMoves(CellState* cell, int row, int col) {
         // Vertical Up
         targetIndex = (row - i) * 8 + col;
         if (vUp && row - i >= 0) {
-            if (cell[targetIndex].piece.type == NONE) {
+            if (cell[targetIndex].piece.type == NONE_TYPE) {
                 addMove(cell, moves, &moveCount, startingIndex, targetIndex);
             }
             else if (cell[targetIndex].piece.color == currentPieceColor) {
@@ -494,7 +561,7 @@ static MovesArray* generateQueenMoves(CellState* cell, int row, int col) {
         // Vertical Down
         targetIndex = (row + i) * 8 + col;
         if (vDown && row + i < 8) {
-            if (cell[targetIndex].piece.type == NONE) {
+            if (cell[targetIndex].piece.type == NONE_TYPE) {
                 addMove(cell, moves, &moveCount, startingIndex, targetIndex);
             }
             else if (cell[targetIndex].piece.color == currentPieceColor) {
@@ -517,7 +584,7 @@ static MovesArray* generateQueenMoves(CellState* cell, int row, int col) {
         // Top-left diagonal
         if (topLeft && (row - i >= 0 && col - i >= 0)) {
             int targetIndex = (row - i) * 8 + (col - i);
-            if (cell[targetIndex].piece.type == NONE) {
+            if (cell[targetIndex].piece.type == NONE_TYPE) {
                 addMove(cell, moves, &moveCount, startingIndex, targetIndex);
             }
             else if (cell[targetIndex].piece.color == currentPieceColor) {
@@ -534,7 +601,7 @@ static MovesArray* generateQueenMoves(CellState* cell, int row, int col) {
         if (topRight && (row - i >= 0 && col + i < 8)) {
             int targetIndex = (row - i) * 8 + (col + i);
 
-            if (cell[targetIndex].piece.type == NONE) {
+            if (cell[targetIndex].piece.type == NONE_TYPE) {
                 addMove(cell, moves, &moveCount, startingIndex, targetIndex);
             }
             else if (cell[targetIndex].piece.color == currentPieceColor) {
@@ -550,7 +617,7 @@ static MovesArray* generateQueenMoves(CellState* cell, int row, int col) {
         if (bottomLeft && (row + i < 8 && col - i >= 0)) {
             int targetIndex = (row + i) * 8 + (col - i);
 
-            if (cell[targetIndex].piece.type == NONE) {
+            if (cell[targetIndex].piece.type == NONE_TYPE) {
                 addMove(cell, moves, &moveCount, startingIndex, targetIndex);
             }
             else if (cell[targetIndex].piece.color == currentPieceColor) {
@@ -566,7 +633,7 @@ static MovesArray* generateQueenMoves(CellState* cell, int row, int col) {
         if (bottomRight && (row + i < 8 && col + i < 8)) {
             int targetIndex = (row + i) * 8 + (col + i);
 
-            if (cell[targetIndex].piece.type == NONE) {
+            if (cell[targetIndex].piece.type == NONE_TYPE) {
                 addMove(cell, moves, &moveCount, startingIndex, targetIndex);
             }
             else if (cell[targetIndex].piece.color == currentPieceColor) {
@@ -616,7 +683,7 @@ static MovesArray* generateRookMoves(CellState* cell,int row, int col) {
         // Horizontal Right
         int targetIndex = row * 8 + (col + i);
         if (hRight && col + i < 8) {
-            if (cell[targetIndex].piece.type == NONE) {
+            if (cell[targetIndex].piece.type == NONE_TYPE) {
                 addMove(cell, moves, &moveCount, startingIndex, targetIndex);
             }
             else if (cell[targetIndex].piece.color == currentPieceColor) {
@@ -632,7 +699,7 @@ static MovesArray* generateRookMoves(CellState* cell,int row, int col) {
         // Horizontal Left
         targetIndex = row * 8 + (col - i);
         if (hLeft && col - i >= 0) {
-            if (cell[targetIndex].piece.type == NONE) {
+            if (cell[targetIndex].piece.type == NONE_TYPE) {
                 addMove(cell, moves, &moveCount, startingIndex, targetIndex);
             }
             else if (cell[targetIndex].piece.color == currentPieceColor) {
@@ -648,7 +715,7 @@ static MovesArray* generateRookMoves(CellState* cell,int row, int col) {
         // Vertical Up
         targetIndex = (row - i) * 8 + col;
         if (vUp && row - i >= 0) {
-            if (cell[targetIndex].piece.type == NONE) {
+            if (cell[targetIndex].piece.type == NONE_TYPE) {
                 addMove(cell, moves, &moveCount, startingIndex, targetIndex);
             }
             else if (cell[targetIndex].piece.color == currentPieceColor) {
@@ -664,7 +731,7 @@ static MovesArray* generateRookMoves(CellState* cell,int row, int col) {
         // Vertical Down
         targetIndex = (row + i) * 8 + col;
         if (vDown && row + i < 8) {
-            if (cell[targetIndex].piece.type == NONE) {
+            if (cell[targetIndex].piece.type == NONE_TYPE) {
                 addMove(cell, moves, &moveCount, startingIndex, targetIndex);
             }
             else if (cell[targetIndex].piece.color == currentPieceColor) {
@@ -713,7 +780,7 @@ static MovesArray* generateBishopMoves(CellState* cell, int row, int col) {
         // Top-left diagonal
         if (topLeft && (row - i >= 0 && col - i >= 0)) {
             int targetIndex = (row - i) * 8 + (col - i);
-            if (cell[targetIndex].piece.type == NONE) {
+            if (cell[targetIndex].piece.type == NONE_TYPE) {
                 addMove(cell, moves, &moveCount, startingIndex, targetIndex);
             }
             else if (cell[targetIndex].piece.color == currentPieceColor) {
@@ -730,7 +797,7 @@ static MovesArray* generateBishopMoves(CellState* cell, int row, int col) {
         if (topRight && (row - i >= 0 && col + i < 8)) {
             int targetIndex = (row - i) * 8 + (col + i);
 
-            if (cell[targetIndex].piece.type == NONE) {
+            if (cell[targetIndex].piece.type == NONE_TYPE) {
                 addMove(cell, moves, &moveCount, startingIndex, targetIndex);
             }
             else if (cell[targetIndex].piece.color == currentPieceColor) {
@@ -746,7 +813,7 @@ static MovesArray* generateBishopMoves(CellState* cell, int row, int col) {
         if (bottomLeft && (row + i < 8 && col - i >= 0)) {
             int targetIndex = (row + i) * 8 + (col - i);
 
-            if (cell[targetIndex].piece.type == NONE) {
+            if (cell[targetIndex].piece.type == NONE_TYPE) {
                 addMove(cell, moves, &moveCount, startingIndex, targetIndex);
             }
             else if (cell[targetIndex].piece.color == currentPieceColor) {
@@ -762,7 +829,7 @@ static MovesArray* generateBishopMoves(CellState* cell, int row, int col) {
         if (bottomRight && (row + i < 8 && col + i < 8)) {
             int targetIndex = (row + i) * 8 + (col + i);
 
-            if (cell[targetIndex].piece.type == NONE) {
+            if (cell[targetIndex].piece.type == NONE_TYPE) {
                 addMove(cell, moves, &moveCount, startingIndex, targetIndex);
             }
             else if (cell[targetIndex].piece.color == currentPieceColor) {

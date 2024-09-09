@@ -109,6 +109,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(solutionDir)dependencies\SDL\include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -145,6 +146,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(solutionDir)dependencies\SDL\include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -156,21 +158,23 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\audio.c" />
+    <ClCompile Include="src\Audio.c" />
     <ClCompile Include="src\core.c" />
     <ClCompile Include="src\game.c" />
     <ClCompile Include="src\main.c" />
-    <ClCompile Include="src\renderer.c" />
-    <ClCompile Include="src\settings.c" />
-    <ClCompile Include="src\utils.c" />
+    <ClCompile Include="src\Graphics.c" />
+    <ClCompile Include="src\Settings.c" />
+    <ClCompile Include="src\Ui.c" />
+    <ClCompile Include="src\Utils.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\audio.h" />
+    <ClInclude Include="include\Audio.h" />
     <ClInclude Include="include\core.h" />
     <ClInclude Include="include\game.h" />
-    <ClInclude Include="include\renderer.h" />
-    <ClInclude Include="include\settings.h" />
-    <ClInclude Include="include\utils.h" />
+    <ClInclude Include="include\Graphics.h" />
+    <ClInclude Include="include\Settings.h" />
+    <ClInclude Include="include\Ui.h" />
+    <ClInclude Include="include\Utils.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
@@ -181,7 +185,8 @@
     <Image Include="asset\images\icon.png" />
   </ItemGroup>
   <ItemGroup>
-    <Font Include="D:\Downloads\General\Fonts\Montserrat\static\Montserrat-Regular.ttf" />
+    <None Include="bin\Debug\settings.ini" />
+    <None Include="bin\Release\settings.ini" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

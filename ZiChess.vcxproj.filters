@@ -18,45 +18,51 @@
     <ClCompile Include="src\main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\renderer.c">
+    <ClCompile Include="src\Graphics.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\core.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\settings.c">
+    <ClCompile Include="src\Settings.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\utils.c">
+    <ClCompile Include="src\Utils.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\game.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\audio.c">
+    <ClCompile Include="src\Audio.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Ui.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\renderer.h">
+    <ClInclude Include="include\Graphics.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\core.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\settings.h">
+    <ClInclude Include="include\Settings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\utils.h">
+    <ClInclude Include="include\Utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\game.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\audio.h">
+    <ClInclude Include="include\Audio.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Ui.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -74,6 +80,7 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <Font Include="D:\Downloads\General\Fonts\Montserrat\static\Montserrat-Regular.ttf" />
+    <None Include="bin\Debug\settings.ini" />
+    <None Include="bin\Release\settings.ini" />
   </ItemGroup>
 </Project>

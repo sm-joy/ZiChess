@@ -1,9 +1,10 @@
-#include "../include/settings.h"
+#include "../include/Settings.h"
 
 int squareSize = 74;
 //windowSize winsize = { 74*8+300, 74*8 };
 windowSize winsize = { 1280 , 720 };
 
+Settings settings = {true,100};
 
 char* knightBgPath1 = NULL;
 char* knightBgPath2 = NULL;
@@ -26,7 +27,7 @@ char* notifySoundPath = NULL;
 char* promoteSoundPath = NULL;
 
 char* frozenStarMusicPath = NULL;
-char* gymnopediNo1MusicPath = NULL;;
+char* gymnopediNo1MusicPath = NULL;
 
 
 
@@ -60,6 +61,9 @@ void initSettings() {
 
 	frozenStarMusicPath = getAbsolutePath("..\\..\\asset\\audio\\music\\FrozenStar.mp3");
 	gymnopediNo1MusicPath = getAbsolutePath("..\\..\\asset\\audio\\music\\GymnopedieNo1.mp3");
+
+	//loadSettings(&settings, "settings.ini");
+
 }
 
 void cleanSettings() {
@@ -79,4 +83,91 @@ void cleanSettings() {
 	if (knightBgPath3 != NULL) free(knightBgPath3);
 	if (kingBgPath1 != NULL) free(kingBgPath1);
 	if (queenBgPath1 != NULL) free(queenBgPath1);
+
+	//saveSettings(&settings, "settings.ini");
 }
+
+
+//void loadSettings(const char* filename, Settings* settings) {
+//    FILE* file = fopen(filename, "r");
+//    if (file == NULL) {
+//        perror("Error opening file");
+//        return;
+//    }
+//
+//    char line[MAX_VALUE_LENGTH];
+//    char section[MAX_KEY_LENGTH] = "";
+//    while (fgets(line, sizeof(line), file)) {
+//        line[strcspn(line, "\r\n")] = 0; // Remove trailing newline
+//
+//        // Skip empty lines and comments
+//        if (line[0] == '\0' || line[0] == ';') {
+//            continue;
+//        }
+//
+//        // Detect section headers
+//        if (line[0] == '[' && line[strlen(line) - 1] == ']') {
+//            strncpy(section, line + 1, strlen(line) - 2);
+//            section[strlen(line) - 2] = '\0';
+//        }
+//        else {
+//            // Parse key-value pairs
+//            char key[MAX_KEY_LENGTH];
+//            char value[MAX_VALUE_LENGTH];
+//            char* delimiter = strchr(line, '=');
+//            if (delimiter) {
+//                *delimiter = '\0';
+//                strncpy(key, line, delimiter - line);
+//                key[delimiter - line] = '\0';
+//                strncpy(value, delimiter + 1, sizeof(value) - 1);
+//
+//                // Save values to appropriate section
+//                if (strcmp(section, "General") == 0) {
+//                    if (strcmp(key, "app_name") == 0) {
+//                        strncpy(config->general.app_name, value, sizeof(config->general.app_name) - 1);
+//                    }
+//                    else if (strcmp(key, "version") == 0) {
+//                        strncpy(config->general.version, value, sizeof(config->general.version) - 1);
+//                    }
+//                }
+//                else if (strcmp(section, "Database") == 0) {
+//                    if (strcmp(key, "host") == 0) {
+//                        strncpy(config->database.host, value, sizeof(config->database.host) - 1);
+//                    }
+//                    else if (strcmp(key, "port") == 0) {
+//                        config->database.port = atoi(value);
+//                    }
+//                    else if (strcmp(key, "username") == 0) {
+//                        strncpy(config->database.username, value, sizeof(config->database.username) - 1);
+//                    }
+//                    else if (strcmp(key, "password") == 0) {
+//                        strncpy(config->database.password, value, sizeof(config->database.password) - 1);
+//                    }
+//                }
+//            }
+//        }
+//    }
+//
+//    fclose(file);
+//}
+//
+//
+//void saveSettings(Settings* settings, const char* filePath) {
+//	FILE* file = fopen(filePath, "w");
+//	if (file == NULL) {
+//		fprintf(stderr, "Failed to open file for loading settings");
+//		return;
+//
+//		fprintf(file, "[General]\n");
+//		fprintf(file, "username=Zihad\n");
+//		
+//		fprintf(file, "[Audio]\n");
+//		fprintf(file, "Sound=%d\n", settings->soundOn);
+//		fprintf(file, "Volume=%d\n", settings->volume);
+//
+//		fclose(file);
+//	}
+//}
+
+
+

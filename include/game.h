@@ -4,15 +4,20 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-#include "renderer.h"
+#include "Graphics.h"
 #include "core.h"
-#include "audio.h"
+#include "Audio.h"
+#include "Ui.h"
+
 
 bool initializeGame();
 Scene run_game();
 void clean();
 void initMenu();
 Scene runMainMenu();
-void renderFrame(Renderer* renderer, CellState* cell);
+void renderFrame(RenderContext* rc, CellState* cell);
+void initOptionsMenu();
+Scene runOptionsmenu();
+
 
 #endif
