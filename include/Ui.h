@@ -33,7 +33,7 @@ typedef struct UI_BUTTON {
 } Button;
 
 typedef struct UI_PROGRESSBAR {
-    int maxProgress, currentProgress;
+    float maxProgress, currentProgress;
     SDL_Color bgColor, fgColor;
     SDL_Rect fgRect, bgRect;
     Label* progressLabel;
@@ -67,8 +67,8 @@ Button* UI_CreateButtonEx(RenderContext* rc, WidgetManager* wm, char id, const c
 void UI_DestroyButtons(WidgetManager* wm);
 void UI_RenderButton(RenderContext* rc, Button* button);
 
-ProgressBar* UI_CreateProgressBar(RenderContext* rc, WidgetManager* wm, int maxProgress, int posX, int posY, int width, int height, SDL_Color* bgColor, SDL_Color* fgColor, SDL_Color* labelColor, TTF_Font* font);
-void UI_UpdateProgressBar(RenderContext* rc, ProgressBar* pb, int increment);
+ProgressBar* UI_CreateProgressBar(RenderContext* rc, WidgetManager* wm, float maxProgress, int posX, int posY, int width, int height, SDL_Color* bgColor, SDL_Color* fgColor, SDL_Color* labelColor, TTF_Font* font);
+void UI_UpdateProgressBar(RenderContext* rc, ProgressBar* pb, float increment);
 void UI_DestroyProgressBars(WidgetManager* wm);
 void UI_RenderProgressBar(RenderContext* rc, ProgressBar* pb);
 

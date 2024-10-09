@@ -2,9 +2,7 @@
 #define UTILS_H
 
 #include "Graphics.h"
-#include <stdbool.h>
-#include <string.h>
-#include <time.h>
+
 
 
 typedef struct {

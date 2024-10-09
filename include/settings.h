@@ -7,9 +7,7 @@
 #define MAX_KEY_LENGTH 128
 #define MAX_VALUE_LENGTH 128
 
-typedef struct WINDOW_DIMENSION {
-	short int width, height;
-} windowSize;
+
 
 typedef struct {
 	bool soundOn;
@@ -18,7 +16,7 @@ typedef struct {
 
 extern Settings settings;
 
-extern windowSize winsize;
+
 extern int squareSize;
 extern char* pieceImagePath;
 extern char* knightBgPath1;

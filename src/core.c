@@ -1,5 +1,7 @@
 #include "../include/core.h"
 
+#include "../include/Values/Config.h"
+
 Piece kw = { WHITE, KING, {0, 0, 333, 334} };
 Piece kb = { BLACK, KING, {0, 334, 333, 334} };
 Piece qw = { WHITE, QUEEN, {333, 0, 333, 334} };

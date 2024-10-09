@@ -2,7 +2,7 @@
 #include "../include/Utils.h"
 
 int squareSize = 70;
-windowSize winsize = { 1280 , 720 };
+
 
 Settings settings = {true,100};
 

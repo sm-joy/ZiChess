@@ -1,5 +1,7 @@
 #include "../include/Utils.h"
-#include <stdio.h>
+#include <stdbool.h>
+#include <string.h>
+#include <time.h>
 
 int randint(int min, int max) {
     if (min > max) {
@@ -136,7 +138,7 @@ void Clock_Update(Clock* clock, int targetFps) {
 
     Uint32 currentTime = SDL_GetTicks();
     Uint32 timedelta = currentTime - clock->lastFrameTime;
-    clock->dt = timedelta / 1000.0f;  // Time in seconds
+    clock->dt = timedelta / 1000.0f;
 
     clock->lastFrameTime = currentTime;
 

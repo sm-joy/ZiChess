@@ -160,25 +160,34 @@
   <ItemGroup>
     <ClCompile Include="src\Audio.c" />
     <ClCompile Include="src\Board.c" />
-    <ClCompile Include="src\Config.c" />
+    <ClCompile Include="src\Scenes\MenuScene.c" />
+    <ClCompile Include="src\Values\Config.c" />
     <ClCompile Include="src\core.c" />
     <ClCompile Include="src\game.c" />
     <ClCompile Include="src\main.c" />
     <ClCompile Include="src\Graphics.c" />
+    <ClCompile Include="src\Scenes\LoadingScene.c" />
     <ClCompile Include="src\Settings.c" />
     <ClCompile Include="src\Ui.c" />
     <ClCompile Include="src\Utils.c" />
+    <ClCompile Include="src\Values\Colors.c" />
+    <ClCompile Include="src\zini.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Audio.h" />
     <ClInclude Include="include\Board.h" />
-    <ClInclude Include="include\Config.h" />
+    <ClInclude Include="include\Scenes\MenuScene.h" />
+    <ClInclude Include="include\Values\Config.h" />
     <ClInclude Include="include\core.h" />
     <ClInclude Include="include\game.h" />
     <ClInclude Include="include\Graphics.h" />
+    <ClInclude Include="include\Scenes\LoadingScene.h" />
+    <ClInclude Include="include\Scenes\SceneManager.h" />
     <ClInclude Include="include\Settings.h" />
     <ClInclude Include="include\Ui.h" />
     <ClInclude Include="include\Utils.h" />
+    <ClInclude Include="include\Values\Colors.h" />
+    <ClInclude Include="include\zini.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
@@ -189,8 +198,13 @@
     <Image Include="asset\images\icon.png" />
   </ItemGroup>
   <ItemGroup>
+    <None Include=".gitignore" />
     <None Include="bin\Debug\settings.ini" />
     <None Include="bin\Release\settings.ini" />
+    <Text Include="data\config.ini">
+      <FileType>Document</FileType>
+    </Text>
+    <None Include="data\settings.ini" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -8,6 +8,7 @@
 #include <SDL_image.h>
 #include <SDL_ttf.h>
 
+#include "Scenes/SceneManager.h"
 #include "Settings.h"
 #include "Graphics.h"
 #include "Utils.h"
@@ -69,14 +70,6 @@ typedef struct {
 	int moveCount;
 } MovesArray;
 
-
-typedef enum SCENE_STATE {
-	STARTUP,
-	MAIN_MENU,
-	MAIN_GAME,
-	OPTIONS,
-	QUIT
-} Scene;
 
 Mixer* CoreInit();
 void destroyCore();

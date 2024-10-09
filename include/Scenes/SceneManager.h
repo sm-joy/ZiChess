@@ -1,0 +1,13 @@
+#ifndef SCENE_MANAGER_H
+#define SCENE_MANAGER_H
+
+typedef enum SCENE_STATE {
+	STARTUP,
+	MAIN_MENU,
+	MAIN_GAME,
+	OPTIONS,
+	QUIT
+} Scene;
+
+
+#endif // SCENE_MANAGER_H

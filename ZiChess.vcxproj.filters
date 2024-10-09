@@ -39,7 +39,22 @@
     <ClCompile Include="src\Ui.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Config.c">
+    <ClCompile Include="src\Values\Config.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Board.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Scenes\LoadingScene.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Values\Colors.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\zini.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Scenes\MenuScene.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -68,7 +83,25 @@
     <ClInclude Include="include\Ui.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\Config.h">
+    <ClInclude Include="include\Values\Config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Board.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Scenes\LoadingScene.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Scenes\SceneManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Values\Colors.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\zini.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Scenes\MenuScene.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -88,5 +121,10 @@
   <ItemGroup>
     <None Include="bin\Debug\settings.ini" />
     <None Include="bin\Release\settings.ini" />
+    <None Include="data\settings.ini" />
+    <None Include=".gitignore" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="data\config.ini" />
   </ItemGroup>
 </Project>

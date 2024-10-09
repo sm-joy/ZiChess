@@ -304,7 +304,7 @@ static bool UI_AddProgressBarToWM(WidgetManager* wm, ProgressBar* progressBar) {
     return true;
 }
 
-ProgressBar* UI_CreateProgressBar(RenderContext* rc, WidgetManager* wm, int maxProgress, int posX, int posY, int width, int height, SDL_Color* bgColor, SDL_Color* fgColor, SDL_Color* labelColor, TTF_Font* font) {
+ProgressBar* UI_CreateProgressBar(RenderContext* rc, WidgetManager* wm, float maxProgress, int posX, int posY, int width, int height, SDL_Color* bgColor, SDL_Color* fgColor, SDL_Color* labelColor, TTF_Font* font) {
     if (!wm || !rc) {
         fprintf(stderr, "RenderContext or WidgetManager is NULL!\n");
         return NULL;
@@ -346,7 +346,7 @@ ProgressBar* UI_CreateProgressBar(RenderContext* rc, WidgetManager* wm, int maxP
     return pb;
 }
 
-void UI_UpdateProgressBar(RenderContext* rc, ProgressBar* pb, int increment) {
+void UI_UpdateProgressBar(RenderContext* rc, ProgressBar* pb, float increment) {
     if (!pb) {
         fprintf(stderr, "ProgressBar is NULL!\n");
         return;
@@ -357,7 +357,7 @@ void UI_UpdateProgressBar(RenderContext* rc, ProgressBar* pb, int increment) {
     if (pb->currentProgress > pb->maxProgress) pb->currentProgress = pb->maxProgress;
     else if (pb->currentProgress < 0) pb->currentProgress = 0;
 
-    float progressRatio = (float)pb->currentProgress / pb->maxProgress;
+    float progressRatio = pb->currentProgress / pb->maxProgress;
     pb->fgRect.w = (int)(pb->bgRect.w * progressRatio);
 
     char progressText[20];

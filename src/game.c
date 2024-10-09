@@ -1,5 +1,6 @@
 #include "../include/game.h"
-
+#include "../include/Scenes/LoadingScene.h"
+#include "../include/Values/Config.h"
 
 RenderContext* rc = NULL;
 WidgetManager* wm = NULL;
@@ -56,7 +57,6 @@ Button* quitButton = NULL;
 
 Label* menuTitle = NULL;
 
-ProgressBar* progressBar = NULL;
 
 
 // for options
@@ -120,6 +120,7 @@ void renderFrame(RenderContext* rc, CellState* cell) {
 
 
 bool initializeGame() {
+    ConfigInit();
     rc = createRenderer("ZiChess", winsize.width, winsize.height, winIconPath);
     wm = UI_CreateWidgetManager();
     if (!rc && !wm) return false;
@@ -133,7 +134,6 @@ bool initializeGame() {
     menuTitleFontSans = UI_LoadFont(wm, opensansFontPath, menuTitleFontSize);
     fontSans = UI_LoadFont(wm, opensansFontPath, boardLabeFontSize);
     
-    progressBar = UI_CreateProgressBar(rc, wm, 100, 100, 100, 100, 30, &white, &black, &black, fontSans);
 
     SDL_Color* textColor = NULL;
     for (int i = 0; i < 8; ++i) {
@@ -328,7 +328,6 @@ Scene runMainMenu() {
         UI_RenderButton(rc, optionsButton);
         UI_RenderButton(rc, quitButton);
 
-        UI_RenderProgressBar(rc, progressBar);
        
         displayWindow(rc);
     }
@@ -380,47 +379,7 @@ Scene runOptionsmenu() {
 }
 
 Scene runStartUp() {
-    //bool isInitialized = false;
-    //initSettings();
-
-    SDL_Color darkGrey = { 20, 20, 20, 255 };
-    SDL_Color cyan = { 0, 255, 255, 255 };
-    SDL_Color lightGray = { 200, 200, 200, 255 };
-    TTF_Font* pbarFont = UI_LoadFont(wm, montserratMediumFontPath, 12);
-    ProgressBar* pbar = UI_CreateProgressBar(rc, wm, 100, 100, 100, 100, 30, &darkGrey, &cyan, &white, fontSans);
-
-    Clock clock;
-    Clock_Init(&clock);
-
-    while (true) {
-
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT) {
-                return QUIT;
-            }
-        }
-        
-        UI_UpdateProgressBar(rc, pbar, (int)(10*clock.dt));
-
-        //if (!isInitialized) {
-        //    
-        //    initializeGame();
-        //    initMenu();
-        //    initOptionsMenu();
-        //    isInitialized = true;
-        //}
-
-
-        setBackgroundColor(rc, &optionsMenuBgColor);
-
-        UI_RenderProgressBar(rc, pbar);
-
-        displayWindow(rc);
-        Clock_Update(&clock, 60);
-        printf("\r%.2f", clock.fps);
-    }
-
-    return MAIN_MENU;
+    return RunLoadingScene(rc, wm);
 }
 
 
@@ -432,6 +391,7 @@ void clean()
     destroyCore();
     cleanSettings();
     UI_Clean(wm);
+    ConfigClean();
 }
 
 
