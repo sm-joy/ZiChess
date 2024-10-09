@@ -6,15 +6,15 @@
 #include <string.h>
 #include <time.h>
 
+
 typedef struct {
-    Uint32 FpsStartTime, frameCount, TimerStartTime;
-    float fps;
-} FPSCounter;
+    Uint32 fpsStartTime, frameCount, timerStartTime, lastFrameTime;
+    double fps, dt;
+} Clock;
 
-void FPSCounter_Init(FPSCounter* fpsCounter);
-void FPSCounter_Update(FPSCounter* fpsCounter);
-bool FPSCounter_SecondsPassed(FPSCounter* fpsCounter, int seconds);
-
+void Clock_Init(Clock* clock);
+void Clock_Update(Clock* clock, int targetFps);
+bool Clock_TimePassed(Clock* clock, int miliSeconds);
 
 SDL_Texture* loadTexture(RenderContext* rc, const char* pFilePath);
 bool addTexture(RenderContext* rc, SDL_Texture* tex);

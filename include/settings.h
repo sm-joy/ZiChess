@@ -2,7 +2,7 @@
 #define SETTINGS_H
 
 #include <SDL.h>
-#include "Utils.h" 
+#include <stdbool.h>
 
 #define MAX_KEY_LENGTH 128
 #define MAX_VALUE_LENGTH 128

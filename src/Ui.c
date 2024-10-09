@@ -12,9 +12,11 @@ WidgetManager* UI_CreateWidgetManager() {
     wm->labels = NULL;
     wm->buttons = NULL;
     wm->fonts = NULL;
+    wm->progressBars = NULL;
     wm->numButtons = 0;
     wm->numLabels = 0;
     wm->numFonts = 0;
+    wm->numProgressBar = 0;
 
     return wm;
 }
@@ -24,6 +26,7 @@ void UI_Clean(WidgetManager* wm) {
         UI_DestroyButtons(wm);
         UI_DestroyLabels(wm);
         UI_DestroyFonts(wm);
+        UI_DestroyProgressBars(wm);
         free(wm);
         wm = NULL;
     }
@@ -132,7 +135,7 @@ Label* UI_CreateLabel(RenderContext* rc, WidgetManager* wm, const char* text, in
         return NULL;
     }
 
-    label->color = color;
+    label->color = *color;
     label->font = font;
     label->rect.x = posX;
     label->rect.y = posY;
@@ -160,7 +163,7 @@ void UI_UpdateLabel(RenderContext* rc, Label* label, const char* text, int posX,
     if (!label) return;
 
     if (text && rc) {
-        SDL_Texture* newTexture = UI_CreateLabelTxture(rc, text, label->color, label->font);
+        SDL_Texture* newTexture = UI_CreateLabelTxture(rc, text, &label->color, label->font);
         if (!newTexture) return;
 
 
@@ -281,3 +284,111 @@ void UI_RenderButton(RenderContext* rc, Button* button) {
 
 // BUTTON END
 
+
+//PROGRESSBAR START
+
+static bool UI_AddProgressBarToWM(WidgetManager* wm, ProgressBar* progressBar) {
+    if (!wm || !progressBar) {
+        fprintf(stderr, "WidgetManager or ProgressBar is null!\n");
+        return false;
+    }
+
+    ProgressBar** newptr = (ProgressBar**)realloc(wm->progressBars, (wm->numProgressBar + 1) * sizeof(ProgressBar*));
+    if (newptr == NULL) {
+        fprintf(stderr, "Error Creating ProgressBar Array! Realloc Failed: %s\n", SDL_GetError());
+        return false;
+    }
+
+    wm->progressBars = newptr;
+    wm->progressBars[wm->numProgressBar++] = progressBar;
+    return true;
+}
+
+ProgressBar* UI_CreateProgressBar(RenderContext* rc, WidgetManager* wm, int maxProgress, int posX, int posY, int width, int height, SDL_Color* bgColor, SDL_Color* fgColor, SDL_Color* labelColor, TTF_Font* font) {
+    if (!wm || !rc) {
+        fprintf(stderr, "RenderContext or WidgetManager is NULL!\n");
+        return NULL;
+    }
+
+    if (!bgColor || !fgColor) {
+        fprintf(stderr, "Colors are NULL!\n");
+        return NULL;
+    }
+
+    ProgressBar* pb = (ProgressBar*)malloc(sizeof(ProgressBar));
+
+    if (!pb) {
+        fprintf(stderr, "Faile to allocate memory for ProgressBar!\n");
+        return NULL;
+    }
+
+    pb->maxProgress = maxProgress;
+    pb->currentProgress = 0;
+    pb->bgColor = *bgColor;
+    pb->fgColor = *fgColor;
+    pb->bgRect = (SDL_Rect){ posX, posY, width, height };
+    pb->fgRect = (SDL_Rect){ posX, posY, 0, height };
+    pb->progressLabel = UI_CreateLabel(rc, wm, "0%", 0, 0, labelColor, font);
+    if (!pb->progressLabel) {
+        free(pb);
+        pb = NULL;
+        return NULL;
+    }
+    UI_UpdateLabel(NULL, pb->progressLabel, NULL, ((width / 2) - (pb->progressLabel->rect.w / 2) + posX), ((height / 2) - (pb->progressLabel->rect.h / 2) + posY));
+
+
+    if (!UI_AddProgressBarToWM) {
+        free(pb);
+        pb = NULL;
+        return NULL;
+    }
+
+    return pb;
+}
+
+void UI_UpdateProgressBar(RenderContext* rc, ProgressBar* pb, int increment) {
+    if (!pb) {
+        fprintf(stderr, "ProgressBar is NULL!\n");
+        return;
+    }
+
+    pb->currentProgress += increment;
+
+    if (pb->currentProgress > pb->maxProgress) pb->currentProgress = pb->maxProgress;
+    else if (pb->currentProgress < 0) pb->currentProgress = 0;
+
+    float progressRatio = (float)pb->currentProgress / pb->maxProgress;
+    pb->fgRect.w = (int)(pb->bgRect.w * progressRatio);
+
+    char progressText[20];
+    snprintf(progressText, sizeof(progressText), "%d%%", (int)(progressRatio * 100));
+
+    UI_UpdateLabel(rc, pb->progressLabel, progressText, NONE, NONE);
+}
+
+
+void UI_DestroyProgressBars(WidgetManager* wm) {
+    if (wm && wm->progressBars) {
+        for (int i = 0; i < wm->numProgressBar; ++i) {
+            free(wm->progressBars[i]);
+            wm->progressBars[i] = NULL;
+        }
+
+        free(wm->progressBars);
+        wm->progressBars = NULL;
+        wm->numProgressBar = 0;
+    }
+}
+
+void UI_RenderProgressBar(RenderContext* rc, ProgressBar* pb) {
+    if (!rc || !pb) {
+        fprintf(stderr, "RenderContext or ProgressBar is NULL!\n");
+        return;
+    }
+
+    renderRect(rc, &pb->bgRect, &pb->bgColor, true);
+    renderRect(rc, &pb->fgRect, &pb->fgColor, true);
+    UI_RenderLabel(rc, pb->progressLabel);
+}
+
+// PROGRESSBAR END

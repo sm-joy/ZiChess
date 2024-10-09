@@ -15,6 +15,7 @@ Scene run_game();
 void clean();
 void initMenu();
 Scene runMainMenu();
+Scene runStartUp();
 void renderFrame(RenderContext* rc, CellState* cell);
 void initOptionsMenu();
 Scene runOptionsmenu();

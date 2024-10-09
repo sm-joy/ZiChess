@@ -1,4 +1,5 @@
 #include "../include/Utils.h"
+#include <stdio.h>
 
 int randint(int min, int max) {
     if (min > max) {
@@ -120,29 +121,49 @@ char* getAbsolutePath(const char* relativePath) {
     return fullPath;
 }
 
-void FPSCounter_Init(FPSCounter* fpsCounter) {
-    fpsCounter->FpsStartTime = fpsCounter->TimerStartTime = SDL_GetTicks();
-    fpsCounter->frameCount = 0;
-    fpsCounter->fps = 0.0f;
+void Clock_Init(Clock* clock) {
+    clock->fpsStartTime = SDL_GetTicks();
+    clock->timerStartTime = clock->fpsStartTime;
+    clock->lastFrameTime = clock->fpsStartTime;
+
+    clock->frameCount = 0;
+    clock->fps = 0.0f;
+    clock->dt = 0.0f;
 }
 
-void FPSCounter_Update(FPSCounter* fpsCounter) {
-    fpsCounter->frameCount++;
-    Uint32 currentTime = SDL_GetTicks();
-    Uint32 TimerStartTime = currentTime - fpsCounter->FpsStartTime;
+void Clock_Update(Clock* clock, int targetFps) {
+    clock->frameCount++;
 
-    if (TimerStartTime >= 1000) {
-        fpsCounter->fps = (float)fpsCounter->frameCount * 1000.0f / TimerStartTime;
-        fpsCounter->frameCount = 0;
-        fpsCounter->FpsStartTime = currentTime;
+    Uint32 currentTime = SDL_GetTicks();
+    Uint32 timedelta = currentTime - clock->lastFrameTime;
+    clock->dt = timedelta / 1000.0f;  // Time in seconds
+
+    clock->lastFrameTime = currentTime;
+
+    // Calculate FPS
+    Uint32 frameTime = currentTime - clock->fpsStartTime;
+    if (frameTime >= 1000) {
+        clock->fps = (float)clock->frameCount * 1000.0f / frameTime;
+        clock->frameCount = 0;
+        clock->fpsStartTime = currentTime;
+    }
+
+    if (targetFps > 0) {
+        Uint32 targetFrameTime = 1000 / targetFps;
+        if (timedelta < targetFrameTime) {
+            Uint32 delay = targetFrameTime - timedelta;
+            SDL_Delay(delay);
+            //printf("%02d ", delay);
+        }
     }
 }
 
-bool FPSCounter_SecondsPassed(FPSCounter* fpsCounter, int seconds) {
+
+bool Clock_TimePassed(Clock* clock, int milliseconds) {
     Uint32 currentTime = SDL_GetTicks();
-    Uint32 TimerStartTime = currentTime - fpsCounter->TimerStartTime;
-    if (TimerStartTime >= (seconds * 1000)) {
-        fpsCounter->TimerStartTime = currentTime;
+
+    if ((currentTime - clock->timerStartTime) >= (Uint32)milliseconds) {
+        clock->timerStartTime = currentTime;
         return true;
     }
     return false;

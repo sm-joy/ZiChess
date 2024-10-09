@@ -14,7 +14,7 @@
 #include "Audio.h"
 #include "Ui.h"
 
-#define index(row, col) row * 8 + col
+#define index(row, col) (row * 8 + col)
 
 typedef struct POSITION{
 	unsigned int x, y;
@@ -28,7 +28,7 @@ typedef struct {
 } Timer_t;
 
 
-typedef enum CHESS_PIECE_Type {
+typedef enum CHESS_PIECE_TYPE {
 	NONE_TYPE,
 	KING,
 	QUEEN,
@@ -71,6 +71,7 @@ typedef struct {
 
 
 typedef enum SCENE_STATE {
+	STARTUP,
 	MAIN_MENU,
 	MAIN_GAME,
 	OPTIONS,

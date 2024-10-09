@@ -21,6 +21,7 @@ Mix_Chunk* promoteSound = NULL;
 
 
 void DestroyTimer(Timer_t* timer) {
+    if (!timer) return;
     if (timer->activeText) UI_DestroyLabel(timer->activeText);
     if (timer->inactiveText) UI_DestroyLabel(timer->inactiveText);
     free(timer);

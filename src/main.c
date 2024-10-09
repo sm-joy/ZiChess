@@ -13,14 +13,15 @@
 
 int main(int argc, char* argv[]) {    
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-    Scene currentScene = MAIN_MENU;
+    Scene currentScene = STARTUP;
     initSettings();
     initializeGame();
     initMenu();
     initOptionsMenu();
 
     while (true) {
-        if (currentScene == MAIN_MENU) currentScene = runMainMenu();
+        if (currentScene == STARTUP) currentScene = runStartUp();
+        else if (currentScene == MAIN_MENU) currentScene = runMainMenu();
         else if (currentScene == MAIN_GAME) currentScene = run_game();
         else if (currentScene == OPTIONS) currentScene = runOptionsmenu();
         else if (currentScene = QUIT) break;

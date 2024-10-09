@@ -8,16 +8,6 @@
 #include <stdbool.h>
 
 
-typedef struct HORIZONTAL_SCROLLBAR {
-    unsigned int currentValue;
-    unsigned int maxValue;
-    SDL_Rect barRect;
-    SDL_Rect handleRect;
-    bool isDragging;
-    int dragOffsetX;
-    SDL_Color barColor;
-    SDL_Color handleColor;
-} hScrollbar;
 
 typedef struct  SDL_GRAPHICS_WRAPPER {
     SDL_Window* window;
@@ -42,7 +32,5 @@ void renderTextureEa(RenderContext* rc, SDL_Texture* texture, SDL_Rect* srcRect,
 void destroyTextures(RenderContext* rc);
 void renderTexture(RenderContext* rc, SDL_Texture* texture, int posX, int poxY);
 
-hScrollbar* createVScrollbar(RenderContext* rc, int x, int y, int width, int height, int maxValue, SDL_Color handleColor, SDL_Color barColor);
-void drawHScrollbar(RenderContext* rc, hScrollbar* scrollbar);
 
 #endif //RENDERER_H

@@ -104,6 +104,7 @@ void playMusic(Mixer* audioSystem, Mix_Music* music,  bool fade){
 }
 
 void destroyMixer(Mixer* audioSystem) {
+    if (!audioSystem) return;
     if (audioSystem->musicPlaying) Mix_HaltMusic();
 
     for (int i = 0; i < audioSystem->soundCount; ++i) {

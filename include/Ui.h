@@ -2,14 +2,14 @@
 #define UI_H
 
 #include <stdbool.h>
-
+#include <SDL.h>
 #include "Graphics.h"
 
 #define NONE -1
 
 typedef struct UI_LABEL {
     TTF_Font* font;
-    SDL_Color* color;
+    SDL_Color color;
     SDL_Texture* texture;
     SDL_Rect rect;
 } Label;
@@ -32,6 +32,13 @@ typedef struct UI_BUTTON {
     ButtonState state;
 } Button;
 
+typedef struct UI_PROGRESSBAR {
+    int maxProgress, currentProgress;
+    SDL_Color bgColor, fgColor;
+    SDL_Rect fgRect, bgRect;
+    Label* progressLabel;
+} ProgressBar;
+
 
 typedef struct UI_WIDGET_MANAGER {
     TTF_Font** fonts;
@@ -39,7 +46,9 @@ typedef struct UI_WIDGET_MANAGER {
     Label** labels;
     size_t numLabels;
     Button** buttons;
-    size_t numButtons;
+    size_t numButtons;    
+    ProgressBar** progressBars;
+    size_t numProgressBar;
 } WidgetManager;
 
 WidgetManager* UI_CreateWidgetManager();
@@ -58,5 +67,9 @@ Button* UI_CreateButtonEx(RenderContext* rc, WidgetManager* wm, char id, const c
 void UI_DestroyButtons(WidgetManager* wm);
 void UI_RenderButton(RenderContext* rc, Button* button);
 
+ProgressBar* UI_CreateProgressBar(RenderContext* rc, WidgetManager* wm, int maxProgress, int posX, int posY, int width, int height, SDL_Color* bgColor, SDL_Color* fgColor, SDL_Color* labelColor, TTF_Font* font);
+void UI_UpdateProgressBar(RenderContext* rc, ProgressBar* pb, int increment);
+void UI_DestroyProgressBars(WidgetManager* wm);
+void UI_RenderProgressBar(RenderContext* rc, ProgressBar* pb);
 
 #endif // UI_H
