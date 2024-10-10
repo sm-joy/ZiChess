@@ -1,5 +1,6 @@
 #include "../include/game.h"
 #include "../include/Scenes/LoadingScene.h"
+#include "../include/Scenes/MenuScene.h"
 #include "../include/Values/Config.h"
 
 RenderContext* rc = NULL;
@@ -43,20 +44,9 @@ SDL_Rect lineRect;
 
 //for menu
 
-SDL_Texture* bgs[5] = {NULL};
-SDL_Texture* mainMenuBgs[4] = {NULL};
-SDL_Texture* optionMenuBgs[3] = {NULL};
-
 static Mixer* mixer = NULL;
 Mix_Music* frozenStar = NULL;
 Mix_Music* gymnopedieNo1 = NULL;
-
-Button* newGameButton = NULL;
-Button* optionsButton = NULL;
-Button* quitButton = NULL;
-
-Label* menuTitle = NULL;
-
 
 
 // for options
@@ -267,72 +257,11 @@ Scene run_game() {
 }
 
 void initMenu() {
-    bgs[0] = loadTexture(rc, knightBgPath1);
-    bgs[1] = loadTexture(rc, knightBgPath2);
-    bgs[2] = loadTexture(rc, knightBgPath3);
-    bgs[3] = loadTexture(rc, queenBgPath1);
-    bgs[4] = loadTexture(rc, kingBgPath1);
-
-    mainMenuBgs[0] = bgs[0];
-    optionMenuBgs[0] = bgs[0];     
-    mainMenuBgs[1] = bgs[4];
-    optionMenuBgs[1] = bgs[4];    
-    mainMenuBgs[2] = bgs[1];
-    optionMenuBgs[2] = bgs[2];
-    mainMenuBgs[3] = bgs[3];
-
-    int button_padY = 10;
-    int button_padX = 100;
-
-    newGameButton = UI_CreateButtonEx(rc, wm, 'N', "New Game", button_padX, 300, NONE, NONE, &lightGray, &gray, &white, NULL, buttonMediumFontMont);
-    optionsButton = UI_CreateButtonEx(rc, wm, 'O', "Options", button_padX, (newGameButton->rect.h + newGameButton->rect.y + button_padY), NONE, NONE, &lightGray, &gray, &white, NULL, buttonMediumFontMont);
-    quitButton = UI_CreateButtonEx(rc, wm, 'Q', "Quit", button_padX, (optionsButton->rect.h + optionsButton->rect.y + button_padY), NONE, NONE, &lightGray, &gray, &white, NULL, buttonMediumFontMont);
-    menuTitle = UI_CreateLabel(rc, wm, "ZiChess", 0, 0, &white, menuTitleBoldFontMont);
-    UI_UpdateLabel(NULL, menuTitle, NULL, (winsize.width / 2) - (menuTitle->rect.w / 2), 100);
-
+    MenuInit(rc, wm);
 }
 
 Scene runMainMenu() {
-    int currentMenuBgIndex = randint(0, 3);
-    Scene nextScene = MAIN_MENU;
-    bool buttonHandled = false;
-
-    while (true) {
-
-        buttonHandled = false;
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT) return QUIT;
-            handleButtonEvent(wm, &event);
-            buttonHandled = true;
-        }
-
-        if (!buttonHandled) {
-            handleButtonEvent(wm, &event);
-        }
-
-        //update
-        nextScene = updateButtons(wm);
-
-        if (nextScene != MAIN_MENU) {
-            stopMusic(mixer);
-            break;
-        }
-
-
-
-        updateMusic(mixer);
-
-        setBgTexture(rc, mainMenuBgs[currentMenuBgIndex], 1280, 720);
-        UI_RenderLabel(rc, menuTitle);
-        UI_RenderButton(rc, newGameButton);
-        UI_RenderButton(rc, optionsButton);
-        UI_RenderButton(rc, quitButton);
-
-       
-        displayWindow(rc);
-    }
-
-    return nextScene;
+    return RunMenuScene(rc, wm, mixer);
 }
 
 void initOptionsMenu() {

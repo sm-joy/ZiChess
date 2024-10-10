@@ -18,13 +18,11 @@ typedef enum {
     BUTTON_NORMAL,
     BUTTON_HOVER,
     BUTTON_PRESSED,
-    BUTTON_RELEASED
 } ButtonState;
 
 typedef struct UI_BUTTON {
-    char id;
+    int id;
     SDL_Rect rect;
-    Label* currentLabel;
     Label* normalLabel;
     Label* hoverLabel;
     Label* pressLabel;
@@ -51,6 +49,7 @@ typedef struct UI_WIDGET_MANAGER {
     size_t numProgressBar;
 } WidgetManager;
 
+
 WidgetManager* UI_CreateWidgetManager();
 void UI_Clean(WidgetManager* wm);
 
@@ -63,9 +62,10 @@ void UI_RenderLabel(RenderContext* rc, Label* label);
 void UI_DestroyLabels(WidgetManager* wm);
 void UI_DestroyLabel(Label* label);
 
-Button* UI_CreateButtonEx(RenderContext* rc, WidgetManager* wm, char id, const char* text, int posX, int posY, int width, int height, SDL_Color* normalLabelColor, SDL_Color* hoverLabelColor, SDL_Color* pressLabelColor, SDL_Color* buttonColor, TTF_Font* font);
+Button* UI_CreateButtonEx(RenderContext* rc, WidgetManager* wm, int id, const char* text, int posX, int posY, int width, int height, SDL_Color* normalLabelColor, SDL_Color* hoverLabelColor, SDL_Color* pressLabelColor, SDL_Color* buttonColor, TTF_Font* font);
 void UI_DestroyButtons(WidgetManager* wm);
 void UI_RenderButton(RenderContext* rc, Button* button);
+int UI_HandleButtonEvent(WidgetManager* wm, SDL_Event* event);
 
 ProgressBar* UI_CreateProgressBar(RenderContext* rc, WidgetManager* wm, float maxProgress, int posX, int posY, int width, int height, SDL_Color* bgColor, SDL_Color* fgColor, SDL_Color* labelColor, TTF_Font* font);
 void UI_UpdateProgressBar(RenderContext* rc, ProgressBar* pb, float increment);

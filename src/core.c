@@ -2,6 +2,8 @@
 
 #include "../include/Values/Config.h"
 
+bool blacksTurn = true;
+
 Piece kw = { WHITE, KING, {0, 0, 333, 334} };
 Piece kb = { BLACK, KING, {0, 334, 333, 334} };
 Piece qw = { WHITE, QUEEN, {333, 0, 333, 334} };
@@ -154,19 +156,6 @@ void loadPositionFromFen(const char* fen, CellState *board) {
     }
 }
 
-//bool getCellPressed(int* row, int* col) {
-//    int mouseX, mouseY;
-//    SDL_GetMouseState(&mouseX, &mouseY);
-//    (*row) = (int)(mouseY / squareSize);
-//    (*col) = (int)(mouseX / squareSize);
-//    if (0 <= (*row) && (*row) < 8 && 0 <= (*col) && (*col) < 8) {
-//        return true;
-//    }
-//    else {
-//        return false;
-//    }
-//}
-
 bool getCellPressed(int* row, int* col) {
     int mouseX, mouseY;
     SDL_GetMouseState(&mouseX, &mouseY);
@@ -188,7 +177,13 @@ bool getCellPressed(int* row, int* col) {
 bool markSelected(CellState* cell, int row, int col) {
     int index = 8 * row + col;
     if (cell[index].piece.type != NONE_TYPE) {
-        cell[index].isSelected = true;
+        if (blacksTurn && cell[index].piece.color == BLACK)
+            cell[index].isSelected = true;
+        else if (!blacksTurn && cell[index].piece.color == WHITE)
+            cell[index].isSelected = true;
+        else
+            return false;
+
         return true;
     }
     else {
@@ -205,7 +200,6 @@ static void promotePawn(CellState* cell, int targetRow, int tragetCol, PieceColo
 void movePiece(CellState* cell, int fromRow, int fromCol, int toRow, int toCol) {
     int fromIndex = fromRow * 8 + fromCol;
     int toIndex = toRow * 8 + toCol;
-
 
     if (fromIndex == toIndex || cell[fromIndex].piece.color == cell[toIndex].piece.color) {
         return;
@@ -228,10 +222,19 @@ void movePiece(CellState* cell, int fromRow, int fromCol, int toRow, int toCol) 
     else {
         cell[toIndex].piece = cell[fromIndex].piece;
     }
+
+    if (cell[fromIndex].piece.color == BLACK && blacksTurn) {
+        blacksTurn = false;
+    }
+    else if (cell[fromIndex].piece.color == WHITE && !blacksTurn) {
+        blacksTurn = true;
+    }
+
+
     cell[fromIndex].piece.type = NONE_TYPE;
     cell[fromIndex].piece.color = NOCOLOR;
     cell[fromIndex].piece.srcRect = (SDL_Rect){ 0, 0, 0, 0 };
-    //printf("Moving piece from [%d, %d] (index %d) to [%d, %d] (index %d)\n", fromRow, fromCol, fromIndex, toRow, toCol, toIndex);
+
 }
 
 static Move* createMove(int startingIndex, int targetIndex) {
@@ -260,94 +263,6 @@ void destroyMoves(CellState* cell, Move** moves, int moveCount) {
         moves = NULL;
     }
 }
-
-static bool isHover(Button* button)
-{
-    SDL_Point mousePos = {0, 0};
-    SDL_GetMouseState(&mousePos.x, &mousePos.y);
-    return SDL_PointInRect(&mousePos, &button->rect);
-}
-
-static bool isPressed(Button* button, SDL_Event* event) {
-    return event->type == SDL_MOUSEBUTTONDOWN && event->button.button == SDL_BUTTON_LEFT && isHover(button);
-}
-
-static bool isReleased(Button* button, SDL_Event* event) {
-    return event->type == SDL_MOUSEBUTTONUP && button->state == BUTTON_PRESSED;
-}
-
-Scene updateButtons(WidgetManager* wm) {
-    Scene nextScene = MAIN_MENU;
-    for (int i = 0; i < wm->numButtons; ++i) {
-        Button* button = wm->buttons[i];
-        switch (button->state) {
-        case BUTTON_RELEASED: {
-            switch (button->id) {
-            case 'N': {
-                nextScene =  MAIN_GAME;
-                break;
-            }
-            case 'O': {
-                nextScene =  OPTIONS;
-                break;
-            }
-            case 'Q': {
-                nextScene =  QUIT;
-                break;
-            }
-            default: {
-                nextScene = MAIN_MENU;
-                break;
-            }
-            }
-            break;
-        }
-        case BUTTON_HOVER: {
-            button->currentLabel = button->hoverLabel;
-            break;
-        }
-        case BUTTON_PRESSED: {
-            button->currentLabel = button->pressLabel;
-            break;
-        }
-        case BUTTON_NORMAL: {
-            button->currentLabel = button->normalLabel;
-        }
-        default: {
-            button->currentLabel = button->normalLabel;
-            break;
-        }
-        }
-    }
-
-    return nextScene;
-}
-
-
-void handleButtonEvent(WidgetManager* wm, SDL_Event* event) {
-    if (wm->buttons != NULL) {
-        for (int i = 0; i < wm->numButtons; ++i) {
-            Button* button = wm->buttons[i];
-
-            if (button->state != BUTTON_PRESSED) {
-                if (isHover(button)) {
-                    button->state = BUTTON_HOVER;
-                }
-                else {
-                    button->state = BUTTON_NORMAL;
-                }
-            }
-
-            if (isPressed(button, event)) {
-                button->state = BUTTON_PRESSED;
-            }
-            else if (isReleased(button, event)) {
-                button->state = BUTTON_RELEASED;
-            }
-        }
-    }
-}
-
 
 static bool addMove(CellState* cell, Move** moves, int* moveCount, int startingIndex, int targetIndex) {
     if (targetIndex < 0 || targetIndex >= 64) return false;

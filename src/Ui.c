@@ -1,5 +1,5 @@
 #include "../include/Ui.h"
-
+#include "../include/Values/Config.h"
 
 
 WidgetManager* UI_CreateWidgetManager() {
@@ -32,6 +32,7 @@ void UI_Clean(WidgetManager* wm) {
     }
 }
 
+
 // FONT START
 
 static bool UI_AddFontToWM(WidgetManager* wm, TTF_Font* font) {
@@ -45,23 +46,39 @@ static bool UI_AddFontToWM(WidgetManager* wm, TTF_Font* font) {
 
     wm->fonts = newptr;
     wm->fonts[wm->numFonts++] = font;
+    printf("added %p\n", (void*)font);
     return true;
-
 }
 
 TTF_Font* UI_LoadFont(WidgetManager* wm, const char* fontPath, int fontSize) {
+    if (!fontPath) {
+        fprintf(stderr, "Font Path is NULL\n");
+        return NULL;
+    }
+
     TTF_Font* font = TTF_OpenFont(fontPath, fontSize);
     if (!font) {
         fprintf(stderr, "Error Loading '%s' Font! Error: %s\n", fontPath, TTF_GetError());
         return NULL;
     }
+
+    if (wm) {
+        if (!UI_AddFontToWM(wm, font)) {
+            fprintf(stderr, "Error Adding '%s' Font to WidgetManager!\n", fontPath);
+            TTF_CloseFont(font);
+            font = NULL;
+            return NULL;
+        }
+    }
+
     return font;
 }
 
 void UI_DestroyFonts(WidgetManager* wm) {
-    if (wm->fonts) {
+    if (wm && wm->fonts) {
         for (int i = 0; i < wm->numFonts; ++i) {
-            TTF_CloseFont(wm->fonts[i]); 
+            printf("deleting address of %p", (void*)(wm->fonts[i]));
+            if (wm->fonts[i]) TTF_CloseFont(wm->fonts[i]);
             wm->fonts[i] = NULL;
         }
         free(wm->fonts);
@@ -76,7 +93,7 @@ void UI_DestroyFonts(WidgetManager* wm) {
 
 void UI_DestroyLabel(Label* label) {
     if (!label) return;
-    if (!label->texture) {
+    if (label->texture) {
         SDL_DestroyTexture(label->texture);
         label->texture = NULL;
     }
@@ -212,7 +229,7 @@ static bool UI_AddButtonToWM(WidgetManager* wm, Button* button) {
 Button* UI_CreateButtonEx(
     RenderContext* rc,
     WidgetManager* wm,
-    char id,
+    int id,
     const char* text,
     int posX,
     int posY,
@@ -234,7 +251,6 @@ Button* UI_CreateButtonEx(
     button->state = BUTTON_NORMAL;
 
     button->normalLabel = UI_CreateLabel(rc, wm, text, posX, posY, normalLabelColor, font);
-    button->currentLabel = button->normalLabel;
     button->hoverLabel = UI_CreateLabel(rc, wm, text, posX, posY, hoverLabelColor, font);
     button->pressLabel = UI_CreateLabel(rc, wm, text, posX, posY, pressLabelColor, font);
 
@@ -273,11 +289,54 @@ void UI_DestroyButtons(WidgetManager* wm) {
 
 
 void UI_RenderButton(RenderContext* rc, Button* button) {
-    if (button->color.a == 0) renderTextureEa(rc, button->currentLabel->texture, NULL, &button->rect);
+    if (!rc || !button) return;
+
+    Label* current = button->normalLabel;
+    switch (button->state) {
+        case BUTTON_NORMAL: current = button->normalLabel; break;
+        case BUTTON_HOVER: current = button->hoverLabel; break;
+        case BUTTON_PRESSED: current = button->pressLabel; break;
+        default: break;
+    }
+
+    if (button->color.a == 0) renderTextureEa(rc, current->texture, NULL, &button->rect);
     else {
         renderRect(rc, &button->rect, &button->color, true);
-        UI_RenderLabel(rc, button->currentLabel);
+        UI_RenderLabel(rc, current);
     }
+}
+
+static bool UI_IsButtonHover(Button* button)
+{
+    SDL_Point mousePos = { 0, 0 };
+    SDL_GetMouseState(&mousePos.x, &mousePos.y);
+    return SDL_PointInRect(&mousePos, &button->rect);
+}
+
+int UI_HandleButtonEvent(WidgetManager* wm, SDL_Event* event) {
+    if (!wm || !wm->buttons || wm->numButtons <= 0) {
+        return NONE;
+    }
+
+    for (int i = 0; i < wm->numButtons; ++i) {
+        Button* button = wm->buttons[i];
+        bool isHovering = UI_IsButtonHover(button);
+
+        if (event->type == SDL_MOUSEBUTTONDOWN &&
+            event->button.button == SDL_BUTTON_LEFT &&
+            isHovering) button->state = BUTTON_PRESSED;
+        else if (event->type == SDL_MOUSEBUTTONUP &&
+            button->state == BUTTON_PRESSED) {
+            button->state = BUTTON_NORMAL;
+            return button->id;
+        }
+        else if (button->state != BUTTON_PRESSED) {
+            if (isHovering) button->state = BUTTON_HOVER;
+            else button->state = BUTTON_NORMAL;
+        }
+    }
+
+    return NONE;
 }
 
 

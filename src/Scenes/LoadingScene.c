@@ -11,9 +11,9 @@
 
 
 Scene RunLoadingScene(RenderContext* rc, WidgetManager* wm) {
-    
+    SDL_Texture* bg = loadTexture(rc, knightBgPath1);
     TTF_Font* pbarFont = UI_LoadFont(wm, montserratMediumFontPath, 12);
-    ProgressBar* pbar = UI_CreateProgressBar(rc, wm, 100.0f, (winsize.centerX - 384), winsize.centerY, 768, 20, &ColorDarkGrey, &ColorCyan, &ColorWhite, pbarFont);
+    ProgressBar* pbar = UI_CreateProgressBar(rc, wm, 100.0f, (winsize.centerX - 384), winsize.centerY + 300, 768, 20, &ColorDarkGrey, &ColorLightGray, &ColorWhite, pbarFont);
 
     //Clock clock;
     //Clock_Init(&clock);
@@ -30,7 +30,7 @@ Scene RunLoadingScene(RenderContext* rc, WidgetManager* wm) {
 
         if (pbar->currentProgress == pbar->maxProgress) break;
 
-        setBackgroundColor(rc, &ColorLoadingSceneBg);
+        setBgTexture(rc, bg, winsize.width, winsize.height);
 
         UI_RenderProgressBar(rc, pbar);
 
