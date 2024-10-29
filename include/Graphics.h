@@ -2,34 +2,22 @@
 #define RENDERER_H
 
 #include <SDL.h>
-#include <SDL_image.h>
-#include <SDL_ttf.h>
-#include <stdio.h>
 #include <stdbool.h>
-
-
 
 typedef struct  SDL_GRAPHICS_WRAPPER {
     SDL_Window* window;
     SDL_Renderer* renderer;
-    SDL_Surface* winIcon;
-    SDL_Texture** loadedTextures;
-    size_t numTextures;
 } RenderContext;
 
+#define GFX_Display(rc) SDL_RenderPresent((rc)->renderer)
 
-RenderContext* createRenderer(const char* pWinTitle, int pWinWidth, int pWinHeight, const char* pWinIconPath);
-void destroyRenderer(RenderContext* rc);
-void clearWindow(RenderContext* rc);
-void setRenderDrawColor(RenderContext* rc, SDL_Color* pColor);
-void setBackgroundColor(RenderContext* rc, SDL_Color* pColor);
-void setBgTexture(RenderContext* rc, SDL_Texture* texture, int width, int height);
-void displayWindow(RenderContext* rc);
+void GFX_CreateRenderContext(RenderContext*  rc, const char* winTitle, int winWidth, int winHeight);
+void GFX_DestroyRenderContext(RenderContext* rc);
+void GFX_SetBg(RenderContext* rc, SDL_Texture* tex, int winWidth, int winHeight, SDL_Color* color);
 void setWindowIcon(RenderContext* rc, const char* pWinIconPath);
-void renderRect(RenderContext* rc, SDL_Rect* rect, SDL_Color* color, bool isFill);
-void renderTextureEx(RenderContext* rc, SDL_Texture* pTexture, int pPosX, int pPosY, int pTextureWidth, int pTextureHeight);
+void GFX_RenderRect(RenderContext* rc, SDL_Rect* rect, SDL_Color* color, bool isFill);
+void GFX_RenderTextureEx(RenderContext* rc, SDL_Texture* pTexture, int pPosX, int pPosY, int pTextureWidth, int pTextureHeight);
 void renderTextureEa(RenderContext* rc, SDL_Texture* texture, SDL_Rect* srcRect, SDL_Rect* dstRect);
-void destroyTextures(RenderContext* rc);
 void renderTexture(RenderContext* rc, SDL_Texture* texture, int posX, int poxY);
 
 

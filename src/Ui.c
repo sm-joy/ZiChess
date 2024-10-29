@@ -1,34 +1,34 @@
 #include "../include/Ui.h"
 #include "../include/Values/Config.h"
+#include "../include/Utils.h"
+#include <stdio.h>
 
 
-WidgetManager* UI_CreateWidgetManager() {
-    WidgetManager* wm = (WidgetManager*)malloc(sizeof(WidgetManager));
+ bool UI_CreateWidgetManager(WidgetManager* wm) {
     if (!wm) {
-        fprintf(stderr, "Failed to allocate memory for Widgetmanager! Malloc failed!\n");
-        return NULL;
+        LogNullError("Widget Manager", NULL);
+        return false;
     }
-
     wm->labels = NULL;
     wm->buttons = NULL;
     wm->fonts = NULL;
     wm->progressBars = NULL;
+    wm->timers = NULL;
     wm->numButtons = 0;
     wm->numLabels = 0;
     wm->numFonts = 0;
     wm->numProgressBar = 0;
-
-    return wm;
+    wm->numTimer = 0;
+    return true;
 }
 
-void UI_Clean(WidgetManager* wm) {
+void UI_DestroyWidgetManager(WidgetManager* wm) {
     if (wm) {
         UI_DestroyButtons(wm);
         UI_DestroyLabels(wm);
         UI_DestroyFonts(wm);
         UI_DestroyProgressBars(wm);
-        free(wm);
-        wm = NULL;
+        UI_DestroyTimers(wm);
     }
 }
 
@@ -52,7 +52,7 @@ static bool UI_AddFontToWM(WidgetManager* wm, TTF_Font* font) {
 
 TTF_Font* UI_LoadFont(WidgetManager* wm, const char* fontPath, int fontSize) {
     if (!fontPath) {
-        fprintf(stderr, "Font Path is NULL\n");
+        LogNullError("Font Path", NULL);
         return NULL;
     }
 
@@ -145,7 +145,6 @@ static SDL_Texture* UI_CreateLabelTxture(RenderContext* rc, const char* text, SD
 }
 
 Label* UI_CreateLabel(RenderContext* rc, WidgetManager* wm, const char* text, int posX, int posY, SDL_Color* color, TTF_Font* font) {
-
     Label* label = (Label*)malloc(sizeof(Label));;
     if (!label) {
         fprintf(stderr, "Malloc Failed while allocating Label Object!\n");
@@ -193,7 +192,7 @@ void UI_UpdateLabel(RenderContext* rc, Label* label, const char* text, int posX,
         SDL_QueryTexture(label->texture, NULL, NULL, &(label->rect.w), &(label->rect.h));
     }
 
-    if (posX != NONE && posY != NONE) {
+    if (posX != UNDEFINED && posY != UNDEFINED) {
         label->rect.x = posX;
         label->rect.y = posY;
     }
@@ -211,7 +210,8 @@ void UI_RenderLabel(RenderContext* rc, Label* label) {
 
 static bool UI_AddButtonToWM(WidgetManager* wm, Button* button) {
     if (!wm || !button) {
-        fprintf(stderr, "WidgetManager or button is null!\n");
+        if (!wm) LogNullError("Widget Manager", NULL);
+        if (!button) LogNullError("Button", NULL);
         return false;
     }
 
@@ -256,7 +256,7 @@ Button* UI_CreateButtonEx(
 
     button->rect.x = posX;
     button->rect.y = posY;
-    if (height == NONE && width == NONE) {
+    if (height == UNDEFINED && width == UNDEFINED) {
         button->rect.w = button->normalLabel->rect.w;
         button->rect.h = button->normalLabel->rect.h;
     }
@@ -268,6 +268,7 @@ Button* UI_CreateButtonEx(
     if (!UI_AddButtonToWM(wm, button)) {
         free(button);
         button = NULL;
+        printf("Yes");
         return NULL;
     }
 
@@ -299,11 +300,8 @@ void UI_RenderButton(RenderContext* rc, Button* button) {
         default: break;
     }
 
-    if (button->color.a == 0) renderTextureEa(rc, current->texture, NULL, &button->rect);
-    else {
-        renderRect(rc, &button->rect, &button->color, true);
-        UI_RenderLabel(rc, current);
-    }
+    if (button->color.a != 0) GFX_RenderRect(rc, &button->rect, &button->color, true);
+    UI_RenderLabel(rc, current);
 }
 
 static bool UI_IsButtonHover(Button* button)
@@ -315,7 +313,7 @@ static bool UI_IsButtonHover(Button* button)
 
 int UI_HandleButtonEvent(WidgetManager* wm, SDL_Event* event) {
     if (!wm || !wm->buttons || wm->numButtons <= 0) {
-        return NONE;
+        return UNDEFINED;
     }
 
     for (int i = 0; i < wm->numButtons; ++i) {
@@ -336,7 +334,7 @@ int UI_HandleButtonEvent(WidgetManager* wm, SDL_Event* event) {
         }
     }
 
-    return NONE;
+    return UNDEFINED;
 }
 
 
@@ -348,7 +346,8 @@ int UI_HandleButtonEvent(WidgetManager* wm, SDL_Event* event) {
 
 static bool UI_AddProgressBarToWM(WidgetManager* wm, ProgressBar* progressBar) {
     if (!wm || !progressBar) {
-        fprintf(stderr, "WidgetManager or ProgressBar is null!\n");
+        if (!wm) LogNullError("Widget Manager", NULL);
+        if (!progressBar) LogNullError("Progress Bar", NULL);
         return false;
     }
 
@@ -365,12 +364,14 @@ static bool UI_AddProgressBarToWM(WidgetManager* wm, ProgressBar* progressBar) {
 
 ProgressBar* UI_CreateProgressBar(RenderContext* rc, WidgetManager* wm, float maxProgress, int posX, int posY, int width, int height, SDL_Color* bgColor, SDL_Color* fgColor, SDL_Color* labelColor, TTF_Font* font) {
     if (!wm || !rc) {
-        fprintf(stderr, "RenderContext or WidgetManager is NULL!\n");
+        if (!wm) LogNullError("Widget Manager", NULL);
+        if (!rc) LogNullError("Render Context", NULL);
         return NULL;
     }
 
     if (!bgColor || !fgColor) {
-        fprintf(stderr, "Colors are NULL!\n");
+        if (!bgColor) LogNullError("Background Color", NULL);
+        if (!fgColor) LogNullError("Foreground Color", NULL);
         return NULL;
     }
 
@@ -406,8 +407,9 @@ ProgressBar* UI_CreateProgressBar(RenderContext* rc, WidgetManager* wm, float ma
 }
 
 void UI_UpdateProgressBar(RenderContext* rc, ProgressBar* pb, float increment) {
-    if (!pb) {
-        fprintf(stderr, "ProgressBar is NULL!\n");
+    if (!pb || !rc) {
+        if(!pb) LogNullError("Progress Bar", NULL);
+        if (!rc) LogNullError("Render Context", NULL);
         return;
     }
 
@@ -422,7 +424,7 @@ void UI_UpdateProgressBar(RenderContext* rc, ProgressBar* pb, float increment) {
     char progressText[20];
     snprintf(progressText, sizeof(progressText), "%d%%", (int)(progressRatio * 100));
 
-    UI_UpdateLabel(rc, pb->progressLabel, progressText, NONE, NONE);
+    UI_UpdateLabel(rc, pb->progressLabel, progressText, UNDEFINED, UNDEFINED);
 }
 
 
@@ -440,14 +442,102 @@ void UI_DestroyProgressBars(WidgetManager* wm) {
 }
 
 void UI_RenderProgressBar(RenderContext* rc, ProgressBar* pb) {
-    if (!rc || !pb) {
-        fprintf(stderr, "RenderContext or ProgressBar is NULL!\n");
+    if (!pb || !rc) {
+        if (!pb) LogNullError("Progress Bar", NULL);
+        if (!rc) LogNullError("Render Context", NULL);
         return;
     }
 
-    renderRect(rc, &pb->bgRect, &pb->bgColor, true);
-    renderRect(rc, &pb->fgRect, &pb->fgColor, true);
+    GFX_RenderRect(rc, &pb->bgRect, &pb->bgColor, true);
+    GFX_RenderRect(rc, &pb->fgRect, &pb->fgColor, true);
     UI_RenderLabel(rc, pb->progressLabel);
 }
 
 // PROGRESSBAR END
+
+//TIMER START
+
+
+static bool UI_AddTimerToWM(WidgetManager* wm, Timer* timer) {
+    if (!timer || !wm) return false;
+
+    Timer** newptr = (Timer**)realloc(wm->timers, (wm->numTimer + 1) * sizeof(Timer*));
+    if (!newptr) {
+        fprintf(stderr, "Error Creating Timer Array! Realloc Failed: %s\n", SDL_GetError());
+        return false;
+    }
+
+    wm->timers = newptr;
+    wm->timers[wm->numTimer++] = timer;
+    return true;
+
+}
+
+
+Timer* UI_CreateTimer(RenderContext* rc, WidgetManager* wm, int min, int sec, int posX, int posY, SDL_Color* activeColor, SDL_Color* inactiveColor, TTF_Font* font) {
+    Timer* timer = (Timer*)malloc(sizeof(Timer));
+    if (!timer) {
+        fprintf(stderr, "Malloc Failed While Creating Timer_t structure!\n");
+        return NULL;
+    }
+
+    timer->min = min;
+    timer->sec = sec;
+    timer->isActive = true;
+    char str[6];
+    sprintf_s(str, 6, "%02d:%02d", min, sec);
+    timer->activeLabel = UI_CreateLabel(rc, NULL, str, posX, posY, activeColor, font);
+    if (!timer->activeLabel) {
+        UI_DestroyTimer(timer);
+        return NULL;
+    }
+
+    timer->inactiveLabel = UI_CreateLabel(rc, NULL, str, posX, posY, inactiveColor, font);
+    if (!timer->inactiveLabel) {
+        UI_DestroyTimer(timer);
+        return NULL;
+    }
+
+    if (!UI_AddTimerToWM(wm, timer)) {
+        UI_DestroyTimer(timer);
+        return NULL;
+    }
+
+    return timer;
+}
+
+
+void UI_DestroyTimer(Timer* timer) {
+    if (!timer) return;
+    if (timer->activeLabel) UI_DestroyLabel(timer->activeLabel);
+    if (timer->inactiveLabel) UI_DestroyLabel(timer->inactiveLabel);
+    free(timer);
+    timer = NULL;
+}
+
+void UI_DestroyTimers(WidgetManager* wm) {
+    if (!wm) return;
+    for (int i = 0; i < wm->numTimer; ++i) {
+        if (wm->timers[i]) UI_DestroyTimer(wm->timers[i]);
+        wm->timers[i] = NULL;
+    }
+    free(wm->timers);
+    wm->timers = NULL;
+    wm->numTimer = 0;
+}
+
+void UI_TimerDecreement(RenderContext* rc, Timer* timer) {
+    if (!timer->isActive) return;
+
+    if (timer->sec > 0) timer->sec--;
+    else {
+        timer->sec = 59;
+        if (timer->min > 0) {
+            timer->min--;
+        }
+    }
+    char str[6];
+    sprintf_s(str, 6, "%02d:%02d", timer->min, timer->sec);
+    UI_UpdateLabel(rc, timer->activeLabel, str, UNDEFINED, UNDEFINED);
+    UI_UpdateLabel(rc, timer->inactiveLabel, str, UNDEFINED, UNDEFINED);
+}

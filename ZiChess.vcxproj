@@ -158,13 +158,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\AssetManager.c" />
     <ClCompile Include="src\Audio.c" />
-    <ClCompile Include="src\Board.c" />
+    <ClCompile Include="src\Engine\Board.c" />
+    <ClCompile Include="src\Core.c" />
+    <ClCompile Include="src\Engine\Engine.c" />
+    <ClCompile Include="src\Engine\Move.c" />
+    <ClCompile Include="src\Engine\Piece.c" />
+    <ClCompile Include="src\Scenes\MainGame.c" />
     <ClCompile Include="src\Scenes\MenuScene.c" />
     <ClCompile Include="src\Scenes\OptionsMenuScene.c" />
     <ClCompile Include="src\Values\Config.c" />
-    <ClCompile Include="src\core.c" />
-    <ClCompile Include="src\game.c" />
     <ClCompile Include="src\main.c" />
     <ClCompile Include="src\Graphics.c" />
     <ClCompile Include="src\Scenes\LoadingScene.c" />
@@ -175,13 +179,17 @@
     <ClCompile Include="src\zini.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\AssetManager.h" />
     <ClInclude Include="include\Audio.h" />
-    <ClInclude Include="include\Board.h" />
+    <ClInclude Include="include\Engine\Board.h" />
+    <ClInclude Include="include\Core.h" />
+    <ClInclude Include="include\Engine\Engine.h" />
+    <ClInclude Include="include\Engine\Move.h" />
+    <ClInclude Include="include\Engine\Piece.h" />
+    <ClInclude Include="include\Scenes\MainGame.h" />
     <ClInclude Include="include\Scenes\MenuScene.h" />
     <ClInclude Include="include\Scenes\OptionsMenuScene.h" />
     <ClInclude Include="include\Values\Config.h" />
-    <ClInclude Include="include\core.h" />
-    <ClInclude Include="include\game.h" />
     <ClInclude Include="include\Graphics.h" />
     <ClInclude Include="include\Scenes\LoadingScene.h" />
     <ClInclude Include="include\Scenes\SceneManager.h" />
@@ -196,17 +204,40 @@
     <ResourceCompile Include="ZiChess.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="asset\images\anonymouse_user.png" />
     <Image Include="asset\images\icon.ico" />
     <Image Include="asset\images\icon.png" />
+    <Image Include="asset\images\king_bg.png" />
+    <Image Include="asset\images\knight_bg1.png" />
+    <Image Include="asset\images\knight_bg2.png" />
+    <Image Include="asset\images\knight_bg3.png" />
+    <Image Include="asset\images\pieces\Pieces.png" />
+    <Image Include="asset\images\queen_bg.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
     <None Include="bin\Debug\settings.ini" />
     <None Include="bin\Release\settings.ini" />
+    <None Include="ZiChess.aps" />
     <Text Include="data\config.ini">
       <FileType>Document</FileType>
     </Text>
     <None Include="data\settings.ini" />
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="asset\fonts\Montserrat-Bold.ttf" />
+    <Font Include="asset\fonts\Montserrat-Medium.ttf" />
+    <Font Include="asset\fonts\OpenSans-Regular.ttf" />
+  </ItemGroup>
+  <ItemGroup>
+    <Media Include="asset\audio\music\FrozenStar.mp3" />
+    <Media Include="asset\audio\music\GymnopedieNo1.mp3" />
+    <Media Include="asset\audio\sfx\capture.wav" />
+    <Media Include="asset\audio\sfx\castle.wav" />
+    <Media Include="asset\audio\sfx\move-check.wav" />
+    <Media Include="asset\audio\sfx\move-self.wav" />
+    <Media Include="asset\audio\sfx\notify.wav" />
+    <Media Include="asset\audio\sfx\promote.wav" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

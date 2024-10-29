@@ -21,16 +21,10 @@
     <ClCompile Include="src\Graphics.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\core.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\Settings.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Utils.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\game.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Audio.c">
@@ -42,7 +36,7 @@
     <ClCompile Include="src\Values\Config.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Board.c">
+    <ClCompile Include="src\Engine\Board.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Scenes\LoadingScene.c">
@@ -60,21 +54,33 @@
     <ClCompile Include="src\Scenes\OptionsMenuScene.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Core.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Scenes\MainGame.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Engine.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Piece.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Move.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\AssetManager.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Graphics.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\core.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\Settings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\Utils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\game.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\Audio.h">
@@ -89,7 +95,7 @@
     <ClInclude Include="include\Values\Config.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\Board.h">
+    <ClInclude Include="include\Engine\Board.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\Scenes\LoadingScene.h">
@@ -110,6 +116,24 @@
     <ClInclude Include="include\Scenes\OptionsMenuScene.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\Core.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Scenes\MainGame.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Engine\Engine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Engine\Piece.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Engine\Move.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\AssetManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ZiChess.rc">
@@ -123,14 +147,63 @@
     <Image Include="asset\images\icon.ico">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="asset\images\pieces\Pieces.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="asset\images\king_bg.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="asset\images\knight_bg1.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="asset\images\knight_bg2.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="asset\images\knight_bg3.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="asset\images\queen_bg.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="asset\images\anonymouse_user.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <None Include="bin\Debug\settings.ini" />
     <None Include="bin\Release\settings.ini" />
     <None Include="data\settings.ini" />
     <None Include=".gitignore" />
+    <None Include="ZiChess.aps" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="data\config.ini" />
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="asset\fonts\Montserrat-Bold.ttf" />
+    <Font Include="asset\fonts\Montserrat-Medium.ttf" />
+    <Font Include="asset\fonts\OpenSans-Regular.ttf" />
+  </ItemGroup>
+  <ItemGroup>
+    <Media Include="asset\audio\music\GymnopedieNo1.mp3" />
+    <Media Include="asset\audio\music\FrozenStar.mp3" />
+    <Media Include="asset\audio\sfx\capture.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="asset\audio\sfx\castle.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="asset\audio\sfx\move-check.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="asset\audio\sfx\move-self.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="asset\audio\sfx\notify.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="asset\audio\sfx\promote.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
   </ItemGroup>
 </Project>

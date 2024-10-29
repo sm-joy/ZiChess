@@ -14,3 +14,13 @@ SDL_Color ColorGray = { 128, 128, 128, 255 };
 SDL_Color ColorLightGray = { 200, 200, 200, 255 };
 SDL_Color ColorDarkGrey = { 20, 20, 20, 255 };
 SDL_Color ColorLoadingSceneBg = { 35, 36, 54, 255 };
+
+SDL_Color ColorSquare1 = { 180, 136, 97, 255 };
+SDL_Color ColorSquare2 = { 239, 217, 180, 255 };
+SDL_Color ColorSelectedSquare = { 222, 201, 110, 220 };
+
+SDL_Color ColorTargetSquare1 = { 189, 113, 90, 255 };
+SDL_Color ColorTargetSquare2 = { 219, 154, 132, 255 };
+
+
+SDL_Color ColorMainGameBG = { 25, 30, 40, 220 };

@@ -17,6 +17,12 @@ extern SDL_Color ColorGray;
 extern SDL_Color ColorLightGray;
 extern SDL_Color ColorDarkGrey;
 
-extern SDL_Color ColorLoadingSceneBg;
+extern SDL_Color ColorSquare1;
+extern SDL_Color ColorSquare2;
+extern SDL_Color ColorSelectedSquare;
+extern SDL_Color ColorTargetSquare1;
+extern SDL_Color ColorTargetSquare2;
+
+extern SDL_Color ColorMainGameBG;
 
 #endif // COLORS_H

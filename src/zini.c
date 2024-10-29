@@ -242,10 +242,12 @@ const char* ZINI_GetValueEx(INIFILE* iniFile, const char* section, const char* k
     return value;
 }
 
-void ZINI_Clean(INIFILE *iniFile) {
+void ZINI_Clean(INIFILE* iniFile) {
     if (!iniFile) return;
-    for (int i = 0; i < iniFile->sectionCount; ++i) {
-        if (!iniFile->sections[i].pairs) free(iniFile->sections[i].pairs);
+
+    for (size_t i = 0; i < iniFile->sectionCount; ++i) {
+        free(iniFile->sections[i].pairs);
+        iniFile->sections[i].pairs = NULL;
     }
     free(iniFile->sections);
     iniFile->sections = NULL;
